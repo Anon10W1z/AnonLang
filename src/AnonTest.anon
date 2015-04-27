@@ -1,0 +1,8 @@
+var i = 4
+writeln i
+i = 5
+writeln i
+--i
+writeln i
+++i
+writeln i
