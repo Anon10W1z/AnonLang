@@ -16,20 +16,33 @@ public class AnonLang {
 	}
 
 	private static void processLine(String line) {
+		line = line.trim();
 		if (line.startsWith("write ")) {
 			String toWrite = line.replaceFirst("write ", "");
 			for (String string : stringToFieldMap.keySet())
-				if (string.equals(toWrite))
-					toWrite = stringToFieldMap.get(string).getValue().toString();
+				toWrite = toWrite.replaceAll('"' + string + '"', stringToFieldMap.get(string).getValue().toString());
+			try {
+				toWrite = new Expression(toWrite).evaluate().toString();
+			} catch (Exception ignored) {
+
+			}
 			System.out.print(toWrite);
 		} else if (line.startsWith("writeln"))
-			if (line.trim().equals("writeln"))
+			if (line.equals("writeln"))
 				System.out.println();
 			else {
 				String toWrite = line.replaceFirst("writeln ", "");
 				for (String string : stringToFieldMap.keySet())
-					if (string.equals(toWrite))
-						toWrite = stringToFieldMap.get(string).getValue().toString();
+					toWrite = toWrite.replaceAll('"' + string + '"', stringToFieldMap.get(string).getValue().toString());
+				try {
+					toWrite = new Expression(toWrite).evaluate().toString();
+				} catch (Exception ignored) {
+
+				}
+				String[] toWriteArray = toWrite.split("\\+");
+				toWrite = "";
+				for (String string : toWriteArray)
+					toWrite += string;
 				System.out.println(toWrite);
 			}
 		else if (line.startsWith("var ")) {
@@ -41,8 +54,10 @@ public class AnonLang {
 					break;
 				}
 			}
-			String value = declaration.replaceFirst(fieldName, "").replaceFirst("=", "").trim();
-			setField(fieldName, value);
+			if (!stringToFieldMap.containsKey(fieldName)) {
+				String value = declaration.replaceFirst(fieldName, "").replaceFirst("=", "").trim();
+				setField(fieldName, value);
+			}
 		} else if (line.startsWith("++")) {
 			String fieldName = line.replaceFirst("\\++", "").trim();
 			for (String string : stringToFieldMap.keySet()) {
@@ -50,11 +65,11 @@ public class AnonLang {
 				if (string.equals(fieldName)) {
 					try {
 						int i = Integer.parseInt(fieldValue.toString());
-						setField(fieldName, String.valueOf(i+1));
+						setField(fieldName, String.valueOf(i + 1));
 					} catch (Exception e) {
 						try {
 							double d = Double.parseDouble(fieldValue.toString());
-							setField(fieldName, String.valueOf(d+1));
+							setField(fieldName, String.valueOf(d + 1));
 						} catch (Exception ignored) {
 
 						}
@@ -68,11 +83,11 @@ public class AnonLang {
 				if (string.equals(fieldName)) {
 					try {
 						int i = Integer.parseInt(fieldValue.toString());
-						setField(fieldName, String.valueOf(i-1));
+						setField(fieldName, String.valueOf(i - 1));
 					} catch (Exception e) {
 						try {
 							double d = Double.parseDouble(fieldValue.toString());
-							setField(fieldName, String.valueOf(d-1));
+							setField(fieldName, String.valueOf(d - 1));
 						} catch (Exception ignored) {
 
 						}
@@ -80,8 +95,18 @@ public class AnonLang {
 				}
 			}
 		}
+		final String finalLine = line;
+		stringToFieldMap.keySet().stream().filter(fieldName -> finalLine.replaceAll(" ", "").startsWith(fieldName + "=")).forEach(fieldName -> {
+			String fieldValue = finalLine.replaceAll(" ", "").replaceFirst(fieldName + "=", "");
+			for (String string : stringToFieldMap.keySet())
+				fieldValue = fieldValue.replaceAll(string, stringToFieldMap.get(string).getValue().toString());
+			try {
+				fieldValue = new Expression(fieldValue).evaluate().toString();
+			} catch (Exception ignored) {
 
-		stringToFieldMap.keySet().stream().filter(fieldName -> line.startsWith(fieldName + " = ")).forEach(fieldName -> setField(fieldName, line.replaceFirst(fieldName + " = ", "")));
+			}
+			setField(fieldName, fieldValue);
+		});
 	}
 
 	private static void setField(String fieldName, String value) {

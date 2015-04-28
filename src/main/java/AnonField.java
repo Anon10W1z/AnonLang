@@ -14,4 +14,8 @@ public class AnonField<T> {
 	public void setValue(T value) {
 		this.value = value;
 	}
+
+	public Class getClassType() {
+		return value.getClass();
+	}
 }
