@@ -2,4 +2,4 @@ var i = 4
 writeln "i"
 writeln The i said hi!+ "i"
 writeln "i"*"i"
-writeln (sqrt("i"))*8/3
+writeln (sqrt("i")/2)*8/3
