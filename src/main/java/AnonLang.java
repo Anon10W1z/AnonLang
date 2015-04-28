@@ -18,7 +18,7 @@ public class AnonLang {
 	private static void processLine(String line) {
 		line = line.trim();
 		if (line.startsWith("write ")) {
-			String toWrite = line.replaceFirst("write ", "");
+			String toWrite = line.replaceFirst("write", "").trim();
 			for (String string : stringToFieldMap.keySet())
 				toWrite = toWrite.replaceAll('"' + string + '"', stringToFieldMap.get(string).getValue().toString());
 			try {
@@ -31,7 +31,7 @@ public class AnonLang {
 			if (line.equals("writeln"))
 				System.out.println();
 			else {
-				String toWrite = line.replaceFirst("writeln ", "");
+				String toWrite = line.replaceFirst("writeln", "").trim();
 				for (String string : stringToFieldMap.keySet())
 					toWrite = toWrite.replaceAll('"' + string + '"', stringToFieldMap.get(string).getValue().toString());
 				try {
@@ -46,7 +46,7 @@ public class AnonLang {
 				System.out.println(toWrite);
 			}
 		else if (line.startsWith("var ")) {
-			String declaration = line.replaceFirst("var ", "");
+			String declaration = line.replaceFirst("var", "").trim();
 			String fieldName = "";
 			for (int i = 0; i < declaration.length(); ++i) {
 				if (declaration.charAt(i) == '=') {
