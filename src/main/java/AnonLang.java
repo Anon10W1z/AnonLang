@@ -1,7 +1,6 @@
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Objects;
 
 public class AnonLang {
 	public static HashMap<String, AnonField> stringToFieldMap = new HashMap<>();
