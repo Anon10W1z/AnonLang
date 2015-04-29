@@ -1,6 +1,7 @@
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class AnonLang {
 	public static HashMap<String, AnonField> stringToFieldMap = new HashMap<>();
@@ -21,11 +22,11 @@ public class AnonLang {
 			String toWrite = line.replaceFirst("write", "").trim();
 			for (String string : stringToFieldMap.keySet())
 				toWrite = toWrite.replaceAll('"' + string + '"', stringToFieldMap.get(string).getValue().toString());
-			try {
-				toWrite = new Expression(toWrite).evaluate().toString();
-			} catch (Exception ignored) {
-
-			}
+			toWrite = evaluate(toWrite);
+			String[] toWriteArray = toWrite.split("\\+");
+			toWrite = "";
+			for (String string : toWriteArray)
+				toWrite += !string.equals(toWriteArray[0]) ? " " + evaluate(string.trim()) : evaluate(string.trim());
 			System.out.print(toWrite);
 		} else if (line.startsWith("writeln"))
 			if (line.equals("writeln"))
@@ -34,15 +35,11 @@ public class AnonLang {
 				String toWrite = line.replaceFirst("writeln", "").trim();
 				for (String string : stringToFieldMap.keySet())
 					toWrite = toWrite.replaceAll('"' + string + '"', stringToFieldMap.get(string).getValue().toString());
-				try {
-					toWrite = new Expression(toWrite).evaluate().toString();
-				} catch (Exception ignored) {
-
-				}
+				toWrite = evaluate(toWrite);
 				String[] toWriteArray = toWrite.split("\\+");
 				toWrite = "";
 				for (String string : toWriteArray)
-					toWrite += string;
+					toWrite += !string.equals(toWriteArray[0]) ? " " + evaluate(string.trim()) : evaluate(string.trim());
 				System.out.println(toWrite);
 			}
 		else if (line.startsWith("var ")) {
@@ -100,10 +97,12 @@ public class AnonLang {
 			String fieldValue = finalLine.replaceAll(" ", "").replaceFirst(fieldName + "=", "");
 			for (String string : stringToFieldMap.keySet())
 				fieldValue = fieldValue.replaceAll(string, stringToFieldMap.get(string).getValue().toString());
-			try {
-				fieldValue = new Expression(fieldValue).evaluate().toString();
-			} catch (Exception ignored) {
-
+			fieldValue = evaluate(fieldValue);
+			String[] fieldValueArray = fieldValue.split("\\+");
+			fieldValue = "";
+			for (String string : fieldValueArray) {
+				String toAdd = evaluate(string.trim());
+				fieldValue += toAdd;
 			}
 			setField(fieldName, fieldValue);
 		});
@@ -120,6 +119,14 @@ public class AnonLang {
 			} catch (Exception e2) {
 				stringToFieldMap.put(fieldName, AnonField.of(value));
 			}
+		}
+	}
+
+	private static String evaluate(String expression) {
+		try {
+			return new Expression(expression).evaluate().toString();
+		} catch (Exception e) {
+			return expression;
 		}
 	}
 }

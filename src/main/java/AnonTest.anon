@@ -1,5 +1,2 @@
-var i = 4
-writeln "i"
-writeln The i said hi!+ "i"
-writeln "i"*"i"
-writeln (sqrt("i")/2)*8/3
+writeln The bigger number of 1 and 2 is + max(1, 2)
+writeln A random number I am thinking of is + random()
