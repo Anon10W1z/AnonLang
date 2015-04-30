@@ -1,2 +1,4 @@
 writeln The bigger number of 1 and 2 is + max(1, 2)
-writeln A random number I am thinking of is + random()
+repeat 2
+    repeat 5
+        writeln A random number I am thinking of is + random()
