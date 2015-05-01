@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * @author Udo Klimaschewski (http://about.me/udo.klimaschewski)
  */
-public class Expression {
+public class AnonExpression {
 	private final char DECIMAL_SEPARATOR = '.';
 	private final char MINUS_SIGN = '-';
 	private MathContext mc = MathContext.DECIMAL32;
@@ -43,7 +43,7 @@ public class Expression {
 	private Map<String, Operator> operators = new HashMap<>();
 	private Map<String, Function> functions = new HashMap<>();
 
-	public Expression(String expression) {
+	public AnonExpression(String expression) {
 		this.expression = expression;
 		addOperator(new Operator("+", 20, true) {
 			@Override

@@ -13,9 +13,8 @@ public class AnonLang {
 			throw new IllegalArgumentException("Wrong number of arguments specified");
 		try {
 			ArrayList<String> lines = Files.lines(Paths.get(args[0])).collect(Collectors.toCollection(ArrayList::new));
-			int index = 0;
 			for (String line : lines)
-				processLine(lines, index++, false);
+				processLine(lines, lines.indexOf(line), false);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -68,11 +67,11 @@ public class AnonLang {
 					if (string.equals(fieldName)) {
 						try {
 							int i = Integer.parseInt(fieldValue.toString());
-							setField(fieldName, String.valueOf(i + 1));
+							setField(fieldName, Integer.toString(i + 1));
 						} catch (Exception e) {
 							try {
 								double d = Double.parseDouble(fieldValue.toString());
-								setField(fieldName, String.valueOf(d + 1));
+								setField(fieldName, Double.toString(d + 1));
 							} catch (Exception ignored) {
 
 							}
@@ -86,11 +85,11 @@ public class AnonLang {
 					if (string.equals(fieldName)) {
 						try {
 							int i = Integer.parseInt(fieldValue.toString());
-							setField(fieldName, String.valueOf(i - 1));
+							setField(fieldName, Integer.toString(i - 1));
 						} catch (Exception e) {
 							try {
 								double d = Double.parseDouble(fieldValue.toString());
-								setField(fieldName, String.valueOf(d - 1));
+								setField(fieldName, Double.toString(d - 1));
 							} catch (Exception ignored) {
 
 							}
@@ -127,21 +126,19 @@ public class AnonLang {
 
 	private static void setField(String fieldName, String value) {
 		try {
-			int i = Integer.parseInt(value);
-			stringToFieldMap.put(fieldName, AnonField.of(i));
+			stringToFieldMap.put(fieldName.trim(), AnonField.of(Integer.parseInt(value.trim())));
 		} catch (Exception e) {
 			try {
-				double d = Double.parseDouble(value);
-				stringToFieldMap.put(fieldName, AnonField.of(d));
+				stringToFieldMap.put(fieldName.trim(), AnonField.of(Double.parseDouble(value.trim())));
 			} catch (Exception e2) {
-				stringToFieldMap.put(fieldName, AnonField.of(value));
+				stringToFieldMap.put(fieldName.trim(), AnonField.of(value));
 			}
 		}
 	}
 
 	private static String evaluate(String expression) {
 		try {
-			return new Expression(expression).evaluate().toString();
+			return new AnonExpression(expression).evaluate().toString();
 		} catch (Exception e) {
 			return expression;
 		}
