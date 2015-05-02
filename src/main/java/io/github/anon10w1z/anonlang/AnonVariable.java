@@ -1,12 +1,19 @@
 package io.github.anon10w1z.anonlang;
 
-public class AnonVariable<T> {
+/**
+ * A variable created in an AnonLang program
+ *
+ * @param <T> The type of value this is
+ */
+public final class AnonVariable<T> {
 	private T value;
 
-	public static <T> AnonVariable<T> of(T t) {
-		AnonVariable<T> field = new AnonVariable<>();
-		field.setValue(t);
-		return field;
+	private AnonVariable(T value) {
+		this.value = value;
+	}
+
+	public static <T> AnonVariable<T> of(T value) {
+		return new AnonVariable<>(value);
 	}
 
 	public T getValue() {
@@ -15,5 +22,9 @@ public class AnonVariable<T> {
 
 	public void setValue(T value) {
 		this.value = value;
+	}
+
+	public Class getType() {
+		return value.getClass();
 	}
 }

@@ -1,9 +1,10 @@
-package io.github.anon10w1z.anonlang;/*
+package io.github.anon10w1z.anonlang;
+/*
  * Copyright 2012 Udo Klimaschewski
- * 
+ *
  * http://UdoJava.com/
  * http://about.me/udo.klimaschewski
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,10 +12,10 @@ package io.github.anon10w1z.anonlang;/*
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -22,7 +23,6 @@ package io.github.anon10w1z.anonlang;/*
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
  */
 
 import java.math.BigDecimal;
@@ -32,135 +32,164 @@ import java.math.RoundingMode;
 import java.util.*;
 
 /**
- * @author Udo Klimaschewski (http://about.me/udo.klimaschewski)
+ * @author Udo Klimaschewski and Anon10W1z
  */
-public class AnonExpression {
+public final class AnonExpression {
+	/**
+	 * The decimal separator
+	 */
 	private final char DECIMAL_SEPARATOR = '.';
+	/**
+	 * The minus sign
+	 */
 	private final char MINUS_SIGN = '-';
-	private MathContext mc = MathContext.DECIMAL32;
+
+	/**
+	 * The math context used for computation
+	 */
+	private MathContext mathContext = MathContext.DECIMAL32;
+
+	/**
+	 * The expression string to evaluate
+	 */
 	private String expression = null;
+	/**
+	 * The components of the expression
+	 */
 	private List<String> rpn = null;
+
+	/**
+	 * A map of operators (as strings) to operators
+	 */
 	private Map<String, Operator> operators = new HashMap<>();
+	/**
+	 * A map of functions (as functions) to functions
+	 */
 	private Map<String, Function> functions = new HashMap<>();
 
-	public AnonExpression(String expression) {
+	/**
+	 * Constructs a new expression
+	 *
+	 * @param expression The expression string to evaluate
+	 */
+	private AnonExpression(String expression) {
 		this.expression = expression;
 		addOperator(new Operator("+", 20, true) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.add(v2, mc);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.add(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("-", 20, true) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.subtract(v2, mc);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.subtract(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("*", 30, true) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.multiply(v2, mc);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.multiply(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("/", 30, true) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.divide(v2, mc);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.divide(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("%", 30, true) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.remainder(v2, mc);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.remainder(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("^", 40, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				int signOf2 = v2.signum();
-				double dn1 = v1.doubleValue();
-				v2 = v2.multiply(new BigDecimal(signOf2));
-				BigDecimal remainderOf2 = v2.remainder(BigDecimal.ONE);
-				BigDecimal n2IntPart = v2.subtract(remainderOf2);
-				BigDecimal intPow = v1.pow(n2IntPart.intValueExact(), mc);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				int signOf2 = num2.signum();
+				double dn1 = num1.doubleValue();
+				num2 = num2.multiply(new BigDecimal(signOf2));
+				BigDecimal remainderOf2 = num2.remainder(BigDecimal.ONE);
+				BigDecimal n2IntPart = num2.subtract(remainderOf2);
+				BigDecimal intPow = num1.pow(n2IntPart.intValueExact(), mathContext);
 				BigDecimal doublePow = new BigDecimal(Math.pow(dn1, remainderOf2.doubleValue()));
 
-				BigDecimal result = intPow.multiply(doublePow, mc);
+				BigDecimal result = intPow.multiply(doublePow, mathContext);
 				if (signOf2 == -1)
-					result = BigDecimal.ONE.divide(result, mc.getPrecision(), RoundingMode.HALF_UP);
+					result = BigDecimal.ONE.divide(result, mathContext.getPrecision(), RoundingMode.HALF_UP);
 				return result;
 			}
 		});
 		addOperator(new Operator("&&", 4, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				boolean b1 = !v1.equals(BigDecimal.ZERO);
-				boolean b2 = !v2.equals(BigDecimal.ZERO);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				boolean b1 = !num1.equals(BigDecimal.ZERO);
+				boolean b2 = !num2.equals(BigDecimal.ZERO);
 				return b1 && b2 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 
 		addOperator(new Operator("||", 2, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				boolean b1 = !v1.equals(BigDecimal.ZERO);
-				boolean b2 = !v2.equals(BigDecimal.ZERO);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				boolean b1 = !num1.equals(BigDecimal.ZERO);
+				boolean b2 = !num2.equals(BigDecimal.ZERO);
 				return b1 || b2 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 
 		addOperator(new Operator(">", 10, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.compareTo(v2) == 1 ? BigDecimal.ONE : BigDecimal.ZERO;
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.compareTo(num2) == 1 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 
 		addOperator(new Operator(">=", 10, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.compareTo(v2) >= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.compareTo(num2) >= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 
 		addOperator(new Operator("<", 10, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.compareTo(v2) == -1 ? BigDecimal.ONE : BigDecimal.ZERO;
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.compareTo(num2) == -1 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 
 		addOperator(new Operator("<=", 10, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.compareTo(v2) <= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.compareTo(num2) <= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 
 		addOperator(new Operator("=", 7, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.compareTo(v2) == 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.compareTo(num2) == 0 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 		addOperator(new Operator("==", 7, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return operators.get("=").eval(v1, v2);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return operators.get("=").eval(num1, num2);
 			}
 		});
 
 		addOperator(new Operator("!=", 7, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return v1.compareTo(v2) != 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return num1.compareTo(num2) != 0 ? BigDecimal.ONE : BigDecimal.ZERO;
 			}
 		});
 		addOperator(new Operator("<>", 7, false) {
 			@Override
-			public BigDecimal eval(BigDecimal v1, BigDecimal v2) {
-				return operators.get("!=").eval(v1, v2);
+			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+				return operators.get("!=").eval(num1, num2);
 			}
 		});
 
@@ -168,63 +197,63 @@ public class AnonExpression {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.random();
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("sin", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.sin(Math.toRadians(parameters.get(0).doubleValue()));
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("cos", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.cos(Math.toRadians(parameters.get(0).doubleValue()));
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("tan", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.tan(Math.toRadians(parameters.get(0).doubleValue()));
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("sinh", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.sinh(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("cosh", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.cosh(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("tanh", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.tanh(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("rad", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.toRadians(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("deg", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.toDegrees(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("max", 2) {
@@ -246,21 +275,21 @@ public class AnonExpression {
 		addFunction(new Function("abs", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				return parameters.get(0).abs(mc);
+				return parameters.get(0).abs(mathContext);
 			}
 		});
 		addFunction(new Function("log", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.log(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("log10", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.log10(parameters.get(0).doubleValue());
-				return new BigDecimal(d, mc);
+				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("round", 2) {
@@ -268,7 +297,7 @@ public class AnonExpression {
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				BigDecimal toRound = parameters.get(0);
 				int precision = parameters.get(1).intValue();
-				return toRound.setScale(precision, mc.getRoundingMode());
+				return toRound.setScale(precision, mathContext.getRoundingMode());
 			}
 		});
 		addFunction(new Function("floor", 1) {
@@ -291,9 +320,7 @@ public class AnonExpression {
 				BigDecimal x = parameters.get(0);
 				if (x.compareTo(BigDecimal.ZERO) == 0)
 					return new BigDecimal(0);
-				if (x.signum() < 0)
-					throw new ExpressionException("Argument to SQRT() function must not be negative");
-				BigInteger n = x.movePointRight(mc.getPrecision() << 1).toBigInteger();
+				BigInteger n = x.movePointRight(mathContext.getPrecision() << 1).toBigInteger();
 
 				int bits = (n.bitLength() + 1) >> 1;
 				BigInteger ix = n.shiftRight(bits);
@@ -305,27 +332,55 @@ public class AnonExpression {
 					Thread.yield();
 				} while (ix.compareTo(ixPrev) != 0);
 
-				return new BigDecimal(ix, mc.getPrecision());
+				return new BigDecimal(ix, mathContext.getPrecision());
 			}
 		});
 	}
 
-	private boolean isNumber(String st) {
-		if (st.charAt(0) == MINUS_SIGN && st.length() == 1)
+	/**
+	 * Evaluates the given expression string and returns the result
+	 *
+	 * @param expression The expression string to evaluate
+	 *
+	 * @return The result of the evaluation
+	 */
+	public static String evaluate(String expression) {
+		try {
+			return new AnonExpression(expression).evaluate().toString();
+		} catch (Exception e) {
+			return expression;
+		}
+	}
+
+	/**
+	 * Returns whether or not the given string is a number
+	 *
+	 * @param string The string to test
+	 *
+	 * @return Whether of not the given string is a number
+	 */
+	private boolean isNumber(String string) {
+		if (string.charAt(0) == MINUS_SIGN && string.length() == 1)
 			return false;
-		for (char ch : st.toCharArray())
-			if (!Character.isDigit(ch) && ch != MINUS_SIGN && ch != DECIMAL_SEPARATOR)
+		for (char c : string.toCharArray())
+			if (!Character.isDigit(c) && c != MINUS_SIGN && c != DECIMAL_SEPARATOR)
 				return false;
 		return true;
 	}
 
+	/**
+	 * Converts the given expression string to an RPN expression
+	 *
+	 * @param expression The expression string to evaluate
+	 *
+	 * @return The result of the evaluation
+	 */
 	private List<String> shuntingYard(String expression) {
 		List<String> outputQueue = new ArrayList<>();
 		Stack<String> stack = new Stack<>();
 
 		Tokenizer tokenizer = new Tokenizer(expression);
 
-		String lastFunction = null;
 		String previousToken = null;
 		while (tokenizer.hasNext()) {
 			String token = tokenizer.next();
@@ -333,14 +388,13 @@ public class AnonExpression {
 				outputQueue.add(token);
 			else if (functions.containsKey(token.toLowerCase())) {
 				stack.push(token.toLowerCase());
-				lastFunction = token;
 			} else if (Character.isLetter(token.charAt(0)))
 				stack.push(token);
 			else if (",".equals(token)) {
 				while (!stack.isEmpty() && !"(".equals(stack.peek()))
 					outputQueue.add(stack.pop());
 				if (stack.isEmpty())
-					throw new ExpressionException("Parse error for function '" + lastFunction + "'");
+					break;
 			} else if (operators.containsKey(token)) {
 				Operator o1 = operators.get(token);
 				String token2 = stack.isEmpty() ? null : stack.peek();
@@ -351,7 +405,7 @@ public class AnonExpression {
 				stack.push(token);
 			} else if ("(".equals(token)) {
 				if (previousToken != null && isNumber(previousToken))
-					throw new ExpressionException("Missing operator at character position " + tokenizer.getPos());
+					break;
 				stack.push(token);
 			} else if (")".equals(token)) {
 				while (!stack.isEmpty() && !"(".equals(stack.peek()))
@@ -375,6 +429,11 @@ public class AnonExpression {
 		return outputQueue;
 	}
 
+	/**
+	 * Evaluates this expression
+	 *
+	 * @return The evaluation result of this expression
+	 */
 	public BigDecimal evaluate() {
 		Stack<BigDecimal> stack = new Stack<>();
 		for (String token : getRPN()) {
@@ -390,80 +449,164 @@ public class AnonExpression {
 				BigDecimal fResult = f.evaluate(p);
 				stack.push(fResult);
 			} else {
-				stack.push(new BigDecimal(token, mc));
+				stack.push(new BigDecimal(token, mathContext));
 			}
 		}
 		return stack.pop().stripTrailingZeros();
 	}
 
-	public Operator addOperator(Operator operator) {
-		return operators.put(operator.getOperation(), operator);
+	/**
+	 * Adds an operator to this expression
+	 *
+	 * @param operator The operator to add
+	 */
+	public void addOperator(Operator operator) {
+		operators.put(operator.getOperation(), operator);
 	}
 
-	public Function addFunction(Function function) {
-		return functions.put(function.getName(), function);
+	/**
+	 * Adds a function to this expression
+	 *
+	 * @param function The function to add
+	 */
+	public void addFunction(Function function) {
+		functions.put(function.getName(), function);
 	}
 
+	/**
+	 * Returns the RPN evaluation of this expression
+	 *
+	 * @return The result of the evaluation
+	 */
 	private List<String> getRPN() {
 		if (rpn == null)
 			rpn = shuntingYard(this.expression);
 		return rpn;
 	}
 
-	public class ExpressionException extends RuntimeException {
-		private static final long serialVersionUID = 1118142866870779047L;
-
-		public ExpressionException(String message) {
-			super(message);
-		}
-	}
-
+	/**
+	 * A function in an expression
+	 */
 	public abstract class Function {
+		/**
+		 * The name of the function
+		 */
 		private String name;
+		/**
+		 * The number of parameters the function takes
+		 */
 		private int totalParameters;
 
+		/**
+		 * Constructs a function with the given name and total number of parameters
+		 *
+		 * @param name            The name of this function
+		 * @param totalParameters The number of total parameters this function takes
+		 */
 		public Function(String name, int totalParameters) {
 			this.name = name.toUpperCase();
 			this.totalParameters = totalParameters;
 		}
 
+		/**
+		 * Returns the name of this function
+		 *
+		 * @return The name of this function
+		 */
 		public String getName() {
 			return name;
 		}
 
+		/**
+		 * Returns the total number of parameters this function takes
+		 *
+		 * @return The total number of parameters this function takes
+		 */
 		public int getTotalParameters() {
 			return totalParameters;
 		}
 
+		/**
+		 * Evaluates this function and returns the result
+		 *
+		 * @param parameters The parameters of this function
+		 *
+		 * @return The result of the evaluation
+		 */
 		public abstract BigDecimal evaluate(List<BigDecimal> parameters);
 	}
 
+	/**
+	 * An operator in an expression
+	 */
 	public abstract class Operator {
+		/**
+		 * The operator as a string
+		 */
 		private String operation;
+		/**
+		 * The precedence this operator has relative to other operators
+		 */
 		private int precedence;
+		/**
+		 * Whether or not this operator is left associative
+		 */
 		private boolean leftAssociative;
 
+		/**
+		 * Constructs an operator with the given properties
+		 *
+		 * @param operation       The operator as a string
+		 * @param precedence      The precedence of this operator
+		 * @param leftAssociative Whether of not this operator is left associative
+		 */
 		public Operator(String operation, int precedence, boolean leftAssociative) {
 			this.operation = operation;
 			this.precedence = precedence;
 			this.leftAssociative = leftAssociative;
 		}
 
+		/**
+		 * Returns this operator as a string
+		 *
+		 * @return This operator as a string
+		 */
 		public String getOperation() {
 			return operation;
 		}
 
+		/**
+		 * Returns the precedence of this operator
+		 *
+		 * @return The precedence of this operator
+		 */
 		public int getPrecedence() {
 			return precedence;
 		}
 
+		/**
+		 * Returns whether of not this operator is left associative
+		 *
+		 * @return Whether of not this operator is left associative
+		 */
 		public boolean isLeftAssociative() {
 			return leftAssociative;
 		}
 
-		public abstract BigDecimal eval(BigDecimal v1, BigDecimal v2);
+		/**
+		 * Evaluates this operator on the two given BigDecimals
+		 *
+		 * @param num1 The first decimal
+		 * @param num2 The second decimal
+		 *
+		 * @return The result of the evaluation
+		 */
+		public abstract BigDecimal eval(BigDecimal num1, BigDecimal num2);
 	}
 
+	/**
+	 * A simple tokenizer
+	 */
 	private class Tokenizer implements Iterator<String> {
 		private int pos = 0;
 		private String input;
@@ -520,19 +663,13 @@ public class AnonExpression {
 					if (ch == MINUS_SIGN)
 						break;
 				}
-				if (!operators.containsKey(token.toString()))
-					throw new ExpressionException("Unknown operator '" + token + "' at position " + (pos - token.length() + 1));
 			}
-			return previousToken = token.toString();
+			return token.toString();
 		}
 
 		@Override
 		public void remove() {
-			throw new ExpressionException("remove() not supported");
-		}
-
-		public int getPos() {
-			return pos;
+			//unsupported operation
 		}
 	}
 }
