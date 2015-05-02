@@ -42,6 +42,7 @@ public final class AnonLang {
 				int index = 0;
 				for (int i = 0; i < lines.size(); ++i)
 					processLine(lines, index++, false);
+				stringToVariableMap = new HashMap<>();
 			}
 		} catch (IOException e) { //do not catch any AnonLangException
 			e.printStackTrace();
