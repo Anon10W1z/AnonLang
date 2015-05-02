@@ -335,6 +335,12 @@ public final class AnonExpression {
 				return new BigDecimal(ix, mathContext.getPrecision());
 			}
 		});
+		addFunction(new Function("evaluate", 1) {
+			@Override
+			public BigDecimal evaluate(List<BigDecimal> parameters) {
+				return parameters.get(0);
+			}
+		});
 	}
 
 	/**
@@ -438,16 +444,16 @@ public final class AnonExpression {
 		Stack<BigDecimal> stack = new Stack<>();
 		for (String token : getRPN()) {
 			if (operators.containsKey(token)) {
-				BigDecimal v1 = stack.pop();
-				BigDecimal v2 = stack.pop();
-				stack.push(operators.get(token).eval(v2, v1));
+				BigDecimal num1 = stack.pop();
+				BigDecimal num2 = stack.pop();
+				stack.push(operators.get(token).eval(num2, num1));
 			} else if (functions.containsKey(token.toUpperCase())) {
-				Function f = functions.get(token.toUpperCase());
-				ArrayList<BigDecimal> p = new ArrayList<>(f.getTotalParameters());
-				for (int i = 0; i < f.totalParameters; i++)
-					p.add(0, stack.pop());
-				BigDecimal fResult = f.evaluate(p);
-				stack.push(fResult);
+				Function function = functions.get(token.toUpperCase());
+				ArrayList<BigDecimal> parameters = new ArrayList<>(function.getTotalParameters());
+				for (int i = 0; i < function.totalParameters; ++i)
+					parameters.add(0, stack.pop());
+				BigDecimal functionResult = function.evaluate(parameters);
+				stack.push(functionResult);
 			} else {
 				stack.push(new BigDecimal(token, mathContext));
 			}

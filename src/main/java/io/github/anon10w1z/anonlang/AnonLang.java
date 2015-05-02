@@ -2,6 +2,7 @@ package io.github.anon10w1z.anonlang;
 
 import io.github.anon10w1z.anonlang.exceptions.*;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public final class AnonLang {
 	public static ArrayList<Integer> linesToSkip = new ArrayList<>();
 
 	/**
-	 * Prevent instantiation
+	 * Prevent instantiation of AnonLang
 	 */
 	private AnonLang() {
 
@@ -42,7 +43,7 @@ public final class AnonLang {
 				for (int i = 0; i < lines.size(); ++i)
 					processLine(lines, index++, false);
 			}
-		} catch (Exception e) {
+		} catch (IOException e) { //do not catch any AnonLangException
 			e.printStackTrace();
 		}
 	}
@@ -61,9 +62,9 @@ public final class AnonLang {
 			if (line.startsWith("write ")) {
 				String toWrite = line.replaceFirst("write", "").trim();
 				for (String string : stringToVariableMap.keySet())
-					toWrite = toWrite.replaceAll('"' + string + '"', stringToVariableMap.get(string).getValue().toString());
+					toWrite = toWrite.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
 				toWrite = AnonExpression.evaluate(toWrite);
-				String[] toWriteArray = toWrite.split("\\+");
+				String[] toWriteArray = toWrite.split("&conc&");
 				toWrite = "";
 				for (String string : toWriteArray)
 					toWrite += !string.equals(toWriteArray[0]) ? " " + AnonExpression.evaluate(string.trim()) : AnonExpression.evaluate(string.trim());
@@ -75,9 +76,9 @@ public final class AnonLang {
 				else {
 					String toWrite = line.replaceFirst("writeln", "").trim();
 					for (String string : stringToVariableMap.keySet())
-						toWrite = toWrite.replaceAll('"' + string + '"', stringToVariableMap.get(string).getValue().toString());
+						toWrite = toWrite.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
 					toWrite = AnonExpression.evaluate(toWrite);
-					String[] toWriteArray = toWrite.split("\\+");
+					String[] toWriteArray = toWrite.split("&conc&");
 					toWrite = "";
 					for (String string : toWriteArray)
 						toWrite += !string.equals(toWriteArray[0]) ? " " + AnonExpression.evaluate(string.trim()) : AnonExpression.evaluate(string.trim());
@@ -94,7 +95,7 @@ public final class AnonLang {
 					}
 				}
 				if (!stringToVariableMap.containsKey(variableName) && !variableName.equals("") && !variableName.contains(" ")) {
-					String value = declaration.replaceFirst(variableName, "").replaceFirst("=", "").trim();
+					String value = AnonExpression.evaluate(declaration.replaceFirst(variableName, "").replaceFirst("=", "").trim());
 					if (value.equals(""))
 						throw new MalformedDeclarationException("Initial value for variable " + variableName + " not set");
 					setVariable(variableName, value);
@@ -102,9 +103,11 @@ public final class AnonLang {
 				} else throw new MalformedDeclarationException("Illegal variable declaration: " + variableName);
 			} else if (line.startsWith("++")) {
 				String variableName = line.replaceFirst("\\++", "").trim();
-				for (AnonVariable variable : stringToVariableMap.values()) {
-					String variableValue = variable.getValue().toString();
-					if (variableValue.equals(variableName)) {
+				boolean variableExists = false;
+				for (String variableName2 : stringToVariableMap.keySet()) {
+					if (variableName.equals(variableName2)) {
+						variableExists = true;
+						String variableValue = stringToVariableMap.get(variableName).getValue().toString();
 						try {
 							int i = Integer.parseInt(variableValue);
 							setVariable(variableName, Integer.toString(i + 1));
@@ -119,19 +122,23 @@ public final class AnonLang {
 							}
 						}
 					}
+					if (!variableExists)
+						throw new MalformedPrefixException("Tried to increment non-existent variable " + variableName);
 				}
 			} else if (line.startsWith("--")) {
 				String variableName = line.replaceFirst("--", "").trim();
-				for (String string : stringToVariableMap.keySet()) {
-					Object variableValue = stringToVariableMap.get(string).getValue();
-					if (string.equals(variableName)) {
+				boolean variableExists = false;
+				for (String variableName2 : stringToVariableMap.keySet()) {
+					if (variableName.equals(variableName2)) {
+						variableExists = true;
+						String variableValue = stringToVariableMap.get(variableName).getValue().toString();
 						try {
-							int i = Integer.parseInt(variableValue.toString());
+							int i = Integer.parseInt(variableValue);
 							setVariable(variableName, Integer.toString(i - 1));
 							lineProcessSuccess = true;
 						} catch (Exception e) {
 							try {
-								double d = Double.parseDouble(variableValue.toString());
+								double d = Double.parseDouble(variableValue);
 								setVariable(variableName, Double.toString(d - 1));
 								lineProcessSuccess = true;
 							} catch (Exception e1) {
@@ -139,6 +146,8 @@ public final class AnonLang {
 							}
 						}
 					}
+					if (!variableExists)
+						throw new MalformedPrefixException("Tried to decrement non-existent variable " + variableName);
 				}
 			} else if (line.startsWith("repeat ")) {
 				String repeatAmountString = line.replaceFirst("repeat", "").trim();
@@ -156,14 +165,8 @@ public final class AnonLang {
 				if (line.replaceAll(" ", "").startsWith(variableName + "=")) {
 					String variableValue = line.replaceAll(" ", "").replaceFirst(variableName + "=", "");
 					for (String string : stringToVariableMap.keySet())
-						variableValue = variableValue.replaceAll(string, stringToVariableMap.get(string).getValue().toString());
+						variableValue = variableValue.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
 					variableValue = AnonExpression.evaluate(variableValue);
-					String[] variableValueArray = variableValue.split("\\+");
-					variableValue = "";
-					for (String string : variableValueArray) {
-						String toAdd = AnonExpression.evaluate(string.trim());
-						variableValue += toAdd;
-					}
 					setVariable(variableName, variableValue);
 					lineProcessSuccess = true;
 				}
