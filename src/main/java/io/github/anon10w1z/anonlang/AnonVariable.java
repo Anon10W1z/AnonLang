@@ -1,8 +1,10 @@
-public class AnonField<T> {
+package io.github.anon10w1z.anonlang;
+
+public class AnonVariable<T> {
 	private T value;
 
-	public static <T> AnonField<T> of(T t) {
-		AnonField<T> field = new AnonField<>();
+	public static <T> AnonVariable<T> of(T t) {
+		AnonVariable<T> field = new AnonVariable<>();
 		field.setValue(t);
 		return field;
 	}

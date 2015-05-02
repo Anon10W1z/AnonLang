@@ -1,4 +1,4 @@
-/*
+package io.github.anon10w1z.anonlang;/*
  * Copyright 2012 Udo Klimaschewski
  * 
  * http://UdoJava.com/
