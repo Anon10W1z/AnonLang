@@ -121,79 +121,8 @@ public final class AnonExpression {
 				return result;
 			}
 		});
-		addOperator(new Operator("&&", 4, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				boolean b1 = !num1.equals(BigDecimal.ZERO);
-				boolean b2 = !num2.equals(BigDecimal.ZERO);
-				return b1 && b2 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
 
-		addOperator(new Operator("||", 2, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				boolean b1 = !num1.equals(BigDecimal.ZERO);
-				boolean b2 = !num2.equals(BigDecimal.ZERO);
-				return b1 || b2 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-
-		addOperator(new Operator(">", 10, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return num1.compareTo(num2) == 1 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-
-		addOperator(new Operator(">=", 10, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return num1.compareTo(num2) >= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-
-		addOperator(new Operator("<", 10, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return num1.compareTo(num2) == -1 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-
-		addOperator(new Operator("<=", 10, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return num1.compareTo(num2) <= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-
-		addOperator(new Operator("=", 7, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return num1.compareTo(num2) == 0 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-		addOperator(new Operator("==", 7, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return operators.get("=").eval(num1, num2);
-			}
-		});
-
-		addOperator(new Operator("!=", 7, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return num1.compareTo(num2) != 0 ? BigDecimal.ONE : BigDecimal.ZERO;
-			}
-		});
-		addOperator(new Operator("<>", 7, false) {
-			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
-				return operators.get("!=").eval(num1, num2);
-			}
-		});
-
-		addFunction(new Function("RANDOM", 0) {
+		addFunction(new Function("random", 0) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				double d = Math.random();
@@ -350,9 +279,9 @@ public final class AnonExpression {
 	 *
 	 * @return The result of the evaluation
 	 */
-	public static String evaluate(String expression) {
+	public static Object evaluate(String expression) {
 		try {
-			return new AnonExpression(expression).evaluate().toString();
+			return new AnonExpression(expression).evaluate();
 		} catch (Exception e) {
 			return expression;
 		}
