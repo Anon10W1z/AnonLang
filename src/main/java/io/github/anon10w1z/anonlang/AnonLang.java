@@ -24,6 +24,9 @@ public final class AnonLang {
 	 * A list of all line processors
 	 */
 	public static List<LineProcessor> lineProcessors = new ArrayList<>();
+	/**
+	 * The current index of the current line
+	 */
 	public static int currentIndex;
 	/**
 	 * A list of lines to skip when executed by the main method (used for repeat loops)
@@ -34,6 +37,9 @@ public final class AnonLang {
 	 */
 	private static List<String> currentLines = new ArrayList<>();
 
+	/**
+	 * Initialize the line processors
+	 */
 	static {
 		addLineProcessor(new LineProcessor() {
 			@Override
@@ -45,7 +51,7 @@ public final class AnonLang {
 				String[] toWriteArray = toWrite.split("&conc&");
 				toWrite = "";
 				for (String string : toWriteArray)
-					toWrite += !string.equals(toWriteArray[0]) ? " " + AnonExpression.evaluate(string.trim()) : AnonExpression.evaluate(string.trim()).toString();
+					toWrite += AnonExpression.evaluate(string).toString();
 				System.out.print(toWrite);
 				return true;
 			}
@@ -64,11 +70,11 @@ public final class AnonLang {
 					String toWrite = line.replaceFirst("writeln", "").trim();
 					for (String string : stringToVariableMap.keySet())
 						toWrite = toWrite.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
-					toWrite = AnonExpression.evaluate(toWrite).toString();
+					toWrite = parseEverything(toWrite).toString();
 					String[] toWriteArray = toWrite.split("&conc&");
 					toWrite = "";
 					for (String string : toWriteArray)
-						toWrite += !string.equals(toWriteArray[0]) ? " " + AnonExpression.evaluate(string.trim()) : AnonExpression.evaluate(string.trim()).toString();
+						toWrite += AnonExpression.evaluate(string).toString();
 					System.out.println(toWrite);
 				}
 				return true;
@@ -168,13 +174,13 @@ public final class AnonLang {
 			public boolean processLineNoCheck(String line) {
 				String repeatAmountString = line.replaceFirst("repeat", "").trim();
 				try {
-					int repeatAmount = Integer.parseInt(repeatAmountString);
-					linesToSkip.add(currentIndex + 1);
-					for (int i = 0; i < repeatAmount; ++i)
-						processLine(currentIndex + 1, true);
+					int repeatAmount = Integer.parseInt(parseEverything(repeatAmountString).toString());
+					for (int i = 0; i < repeatAmount; ++i) {
+						linesToSkip.add(currentIndex++);
+						processLine(true);
+					}
 					return true;
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (NumberFormatException e) {
 					throw new MalformedRepeatException(repeatAmountString + " is not a valid repeat amount");
 				}
 			}
@@ -189,9 +195,7 @@ public final class AnonLang {
 			public boolean processLineNoCheck(String line) {
 				String variableName = stringToVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst().get();
 				String variableValueString = line.replaceAll(" ", "").replaceFirst(variableName + "=", "");
-				for (String string : stringToVariableMap.keySet())
-					variableValueString = variableValueString.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
-				Object variableValue = parseVariable(AnonExpression.evaluate(variableValueString).toString());
+				Object variableValue = parseEverything(variableValueString);
 				setVariable(variableName, variableValue);
 				return true;
 			}
@@ -219,9 +223,8 @@ public final class AnonLang {
 		try {
 			for (String fileName : arguments) {
 				currentLines = Files.lines(Paths.get(fileName)).collect(Collectors.toCollection(ArrayList::new));
-				int index = 0;
 				for (int i = 0; i < currentLines.size(); ++i)
-					processLine(index++, false);
+					processLine(false);
 				stringToVariableMap = new HashMap<>();
 				linesToSkip = new ArrayList<>();
 				System.out.println();
@@ -236,20 +239,20 @@ public final class AnonLang {
 	/**
 	 * Processes a line
 	 *
-	 * @param index             The index number of the line to process (in the list of lines)
 	 * @param inRepeatStatement Whether or not this line is being processed in a repeat loop
 	 */
-	private static void processLine(int index, boolean inRepeatStatement) {
-		if (!inRepeatStatement)
-			currentIndex = index;
-		if (!linesToSkip.contains(index) || inRepeatStatement) {
-			String line = currentLines.get(index);
+	private static void processLine(boolean inRepeatStatement) {
+		if (!linesToSkip.contains(currentIndex) || inRepeatStatement) {
+			String line = currentLines.get(currentIndex);
 			boolean lineProcessSuccess = false;
 			for (LineProcessor lineProcessor : lineProcessors)
 				lineProcessSuccess = lineProcessSuccess || lineProcessor.processLineWithCheck(line);
 			if (!lineProcessSuccess)
-				throw new MalformedLineException("Could not process line #" + (index + 1));
+				throw new MalformedLineException("Could not process line #" + (currentIndex + 1));
 		}
+		if (inRepeatStatement)
+			--currentIndex;
+		else ++currentIndex;
 	}
 
 	/**
@@ -270,6 +273,23 @@ public final class AnonLang {
 			}
 		}
 		stringToVariableMap.put(name, AnonVariable.of(value));
+	}
+
+	/**
+	 * Parses EVERYTHING possible from the given string
+	 *
+	 * @param string The string to parse
+	 *
+	 * @return The parsed object
+	 */
+	private static Object parseEverything(String string) {
+		string = string.trim();
+		for (String variableName : stringToVariableMap.keySet())
+			string = string.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
+		String expressionResult = AnonExpression.evaluate(string).toString();
+		if (!expressionResult.equals(string))
+			return parseVariable(expressionResult);
+		return parseVariable(string);
 	}
 
 	/**
