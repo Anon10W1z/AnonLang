@@ -2,7 +2,6 @@ package io.github.anon10w1z.anonlang;
 
 import io.github.anon10w1z.anonlang.exceptions.*;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -220,8 +219,11 @@ public final class AnonLang {
 	 * @param arguments An array of paths to AnonLang files
 	 */
 	public static void main(String[] arguments) {
-		try {
-			for (String fileName : arguments) {
+		if (arguments.length == 0)
+			throw new IllegalArgumentException("No execution file specified");
+		for (String fileName : arguments) {
+			System.out.println("Starting execution of file " + fileName);
+			try {
 				currentLines = Files.lines(Paths.get(fileName)).collect(Collectors.toCollection(ArrayList::new));
 				for (int i = 0; i < currentLines.size(); ++i)
 					processLine(false);
@@ -229,10 +231,10 @@ public final class AnonLang {
 				linesToSkip = new ArrayList<>();
 				System.out.println();
 				System.out.println("Finished execution of file " + fileName);
-				System.out.println();
+			} catch (Exception e) {
+				System.out.println("Execution of " + fileName + " failed");
+				e.printStackTrace();
 			}
-		} catch (IOException e) { //do not catch any AnonLangException
-			e.printStackTrace();
 		}
 	}
 
@@ -266,9 +268,11 @@ public final class AnonLang {
 		name = name.trim();
 		if (stringToVariableMap.containsKey(name)) {
 			AnonVariable variable = stringToVariableMap.get(name);
+			if (value.getClass() == Integer.class && variable.getType() == Double.class)
+				value = ((Integer) value).doubleValue();
 			if (variable.getType() != value.getClass()) {
 				String currentTypeName = variable.getType().toString().replaceFirst("class java.lang.", "");
-				String newTypeName = variable.getType().toString().replaceFirst("class java.lang.", "");
+				String newTypeName = value.getClass().toString().replaceFirst("class java.lang.", "");
 				throw new IllegalAssignmentException("Variable " + name + " is of type " + currentTypeName + " but was assigned value " + value + " of type " + newTypeName);
 			}
 		}
@@ -326,7 +330,9 @@ public final class AnonLang {
 	private abstract static class LineProcessor {
 		/**
 		 * Processes the given line
+		 *
 		 * @param line The line to process
+		 *
 		 * @return Whether or not processing was successful
 		 */
 		public boolean processLineWithCheck(String line) {
@@ -336,14 +342,18 @@ public final class AnonLang {
 
 		/**
 		 * Processes the given line without checking if it can
+		 *
 		 * @param line The line to process
+		 *
 		 * @return Whether or not processing was successful
 		 */
 		public abstract boolean processLineNoCheck(String line);
 
 		/**
 		 * Returns whether or not this line processor can process the given line
+		 *
 		 * @param line The line to check
+		 *
 		 * @return Whether or not this line processor can process the given line
 		 */
 		public abstract boolean canProcessLine(String line);
