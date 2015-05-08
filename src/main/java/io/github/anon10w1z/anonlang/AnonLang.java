@@ -3,12 +3,12 @@ package io.github.anon10w1z.anonlang;
 import io.github.anon10w1z.anonlang.exceptions.*;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * The interpreter of AnonLang
@@ -44,13 +44,13 @@ public final class AnonLang {
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String toWrite = line.replaceFirst("write", "").trim();
-				for (String string : stringToVariableMap.keySet())
-					toWrite = toWrite.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
+				for (String variableName : stringToVariableMap.keySet())
+					toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
 				toWrite = AnonExpression.evaluate(toWrite).toString();
 				String[] toWriteArray = toWrite.split("&conc&");
 				toWrite = "";
 				for (String string : toWriteArray)
-					toWrite += AnonExpression.evaluate(string).toString();
+					toWrite += parseEverything(string);
 				System.out.print(toWrite);
 				return true;
 			}
@@ -67,13 +67,13 @@ public final class AnonLang {
 					System.out.println();
 				else {
 					String toWrite = line.replaceFirst("writeln", "").trim();
-					for (String string : stringToVariableMap.keySet())
-						toWrite = toWrite.replaceAll('&' + string + '&', stringToVariableMap.get(string).getValue().toString());
+					for (String variableName : stringToVariableMap.keySet())
+						toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
 					toWrite = parseEverything(toWrite).toString();
 					String[] toWriteArray = toWrite.split("&conc&");
 					toWrite = "";
 					for (String string : toWriteArray)
-						toWrite += AnonExpression.evaluate(string).toString();
+						toWrite += parseEverything(string);
 					System.out.println(toWrite);
 				}
 				return true;
@@ -193,7 +193,7 @@ public final class AnonLang {
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String variableName = stringToVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst().get();
-				String variableValueString = line.replaceAll(" ", "").replaceFirst(variableName + "=", "");
+				String variableValueString = line.replaceFirst(variableName, "").trim().replaceFirst("=", "");
 				Object variableValue = parseEverything(variableValueString);
 				setVariable(variableName, variableValue);
 				return true;
@@ -201,7 +201,7 @@ public final class AnonLang {
 
 			@Override
 			public boolean canProcessLine(String line) {
-				return stringToVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst().isPresent();
+				return stringToVariableMap.keySet().stream().filter(variableName -> line.replaceFirst(variableName, "").trim().startsWith("=")).findFirst().isPresent();
 			}
 		});
 	}
@@ -220,18 +220,19 @@ public final class AnonLang {
 	 */
 	public static void main(String[] arguments) {
 		if (arguments.length == 0)
-			throw new IllegalArgumentException("No execution file specified");
+			throw new IllegalArgumentException("No execution files specified");
 		for (String fileName : arguments) {
 			System.out.println("Starting execution of file " + fileName);
 			try {
-				currentLines = Files.lines(Paths.get(fileName)).collect(Collectors.toCollection(ArrayList::new));
-				for (int i = 0; i < currentLines.size(); ++i)
-					processLine(false);
-				stringToVariableMap = new HashMap<>();
-				linesToSkip = new ArrayList<>();
+				Path filePath = Paths.get(fileName);
+				currentLines = Files.readAllLines(filePath);
+				currentLines.forEach(line -> processLine(false));
+				stringToVariableMap = new HashMap<>(); //reset variables
+				linesToSkip = new ArrayList<>(); //reset list of lines to skip
 				System.out.println();
 				System.out.println("Finished execution of file " + fileName);
 			} catch (Exception e) {
+				System.out.println();
 				System.out.println("Execution of " + fileName + " failed");
 				e.printStackTrace();
 			}
