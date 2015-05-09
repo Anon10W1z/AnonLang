@@ -59,11 +59,11 @@ public final class AnonExpression {
 	private List<String> rpn = null;
 
 	/**
-	 * A map of operators (as strings) to operators
+	 * A map of operator names to operators
 	 */
 	private Map<String, Operator> operators = new HashMap<>();
 	/**
-	 * A map of functions (as functions) to functions
+	 * A map of function names to functions
 	 */
 	private Map<String, Function> functions = new HashMap<>();
 

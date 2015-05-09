@@ -233,8 +233,8 @@ public final class AnonLang {
 				System.out.println("Finished execution of file " + fileName);
 			} catch (Exception e) {
 				System.out.println();
-				System.out.println("Execution of " + fileName + " failed");
 				e.printStackTrace();
+				System.out.println("Execution of " + fileName + " failed");
 			}
 		}
 	}
@@ -272,8 +272,8 @@ public final class AnonLang {
 			if (value.getClass() == Integer.class && variable.getType() == Double.class)
 				value = ((Integer) value).doubleValue();
 			if (variable.getType() != value.getClass()) {
-				String currentTypeName = variable.getType().toString().replaceFirst("class java.lang.", "");
-				String newTypeName = value.getClass().toString().replaceFirst("class java.lang.", "");
+				String currentTypeName = variable.getType().getName().replaceFirst("java.lang.", "");
+				String newTypeName = value.getClass().getName().replaceFirst("java.lang.", "");
 				throw new IllegalAssignmentException("Variable " + name + " is of type " + currentTypeName + " but was assigned value " + value + " of type " + newTypeName);
 			}
 		}
@@ -348,7 +348,7 @@ public final class AnonLang {
 		 *
 		 * @return Whether or not processing was successful
 		 */
-		public abstract boolean processLineNoCheck(String line);
+		protected abstract boolean processLineNoCheck(String line);
 
 		/**
 		 * Returns whether or not this line processor can process the given line
@@ -357,6 +357,6 @@ public final class AnonLang {
 		 *
 		 * @return Whether or not this line processor can process the given line
 		 */
-		public abstract boolean canProcessLine(String line);
+		protected abstract boolean canProcessLine(String line);
 	}
 }
