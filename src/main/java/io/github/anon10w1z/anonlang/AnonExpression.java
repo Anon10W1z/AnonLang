@@ -129,6 +129,15 @@ public final class AnonExpression {
 				return new BigDecimal(d, mathContext);
 			}
 		});
+		addFunction(new Function("randomBetween", 2) {
+			@Override
+			public BigDecimal evaluate(List<BigDecimal> parameters) {
+				double rangeMin = parameters.get(0).doubleValue();
+				double rangeMax = parameters.get(1).doubleValue();
+				double d = rangeMin + (rangeMax - rangeMin) * Math.random();
+				return new BigDecimal(d, mathContext);
+			}
+		});
 		addFunction(new Function("sin", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {

@@ -5,19 +5,20 @@ import io.github.anon10w1z.anonlang.exceptions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The interpreter of AnonLang
  */
 public final class AnonLang {
 	/**
-	 * Maps variable names to their variables
+	 * Maps variable names to variables
 	 */
 	public static Map<String, AnonVariable> stringToVariableMap = new HashMap<>();
+	/**
+	 * Maps global variable names to global variables
+	 */
+	public static Map<String, AnonVariable> stringToGlobalVariableMap = new HashMap<>();
 
 	/**
 	 * A list of all line processors
@@ -35,6 +36,10 @@ public final class AnonLang {
 	 * The current list of lines to process
 	 */
 	private static List<String> currentLines = new ArrayList<>();
+	/**
+	 * The name of the current file that is being processed
+	 */
+	private static String currentFileName;
 
 	/**
 	 * Initialize the line processors
@@ -43,21 +48,17 @@ public final class AnonLang {
 		addLineProcessor(new LineProcessor() {
 			@Override
 			public boolean processLineNoCheck(String line) {
-				String toWrite = line.replaceFirst("write", "").trim();
+				String toWrite = line.replaceFirst("(?i)write", "").trim();
 				for (String variableName : stringToVariableMap.keySet())
 					toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
 				toWrite = AnonExpression.evaluate(toWrite).toString();
-				String[] toWriteArray = toWrite.split("&conc&");
-				toWrite = "";
-				for (String string : toWriteArray)
-					toWrite += parseEverything(string);
 				System.out.print(toWrite);
 				return true;
 			}
 
 			@Override
 			public boolean canProcessLine(String line) {
-				return line.startsWith("write ");
+				return line.toLowerCase().startsWith("write ");
 			}
 		});
 		addLineProcessor(new LineProcessor() {
@@ -66,14 +67,10 @@ public final class AnonLang {
 				if (line.equals("writeln"))
 					System.out.println();
 				else {
-					String toWrite = line.replaceFirst("writeln", "").trim();
+					String toWrite = line.replaceFirst("(?i)writeln", "").trim();
 					for (String variableName : stringToVariableMap.keySet())
 						toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
 					toWrite = parseEverything(toWrite).toString();
-					String[] toWriteArray = toWrite.split("&conc&");
-					toWrite = "";
-					for (String string : toWriteArray)
-						toWrite += parseEverything(string);
 					System.out.println(toWrite);
 				}
 				return true;
@@ -81,13 +78,13 @@ public final class AnonLang {
 
 			@Override
 			public boolean canProcessLine(String line) {
-				return line.startsWith("writeln");
+				return line.toLowerCase().startsWith("writeln");
 			}
 		});
 		addLineProcessor(new LineProcessor() {
 			@Override
 			public boolean processLineNoCheck(String line) {
-				String declaration = line.replaceFirst("var", "").trim();
+				String declaration = line.replaceFirst("(?i)var", "").trim();
 				String variableName = "";
 				for (int i = 0; i < declaration.length(); ++i) {
 					if (declaration.charAt(i) == '=') {
@@ -96,7 +93,7 @@ public final class AnonLang {
 					}
 				}
 				if (!stringToVariableMap.containsKey(variableName) && !variableName.equals("") && !variableName.contains(" ")) {
-					String valueString = AnonExpression.evaluate(declaration.replaceFirst(variableName, "").replaceFirst("=", "").trim()).toString();
+					String valueString = parseEverything(declaration.replaceFirst(variableName, "").replaceFirst("=", "").trim()).toString();
 					if (valueString.equals(""))
 						throw new MalformedDeclarationException("Initial value for variable " + variableName + " not set");
 					Object value = parseVariable(valueString);
@@ -107,7 +104,33 @@ public final class AnonLang {
 
 			@Override
 			public boolean canProcessLine(String line) {
-				return line.startsWith("var ");
+				return line.toLowerCase().startsWith("var ");
+			}
+		});
+		addLineProcessor(new LineProcessor() {
+			@Override
+			public boolean processLineNoCheck(String line) {
+				String declaration = line.replaceFirst("(?i)global var", "").trim();
+				String variableName = "";
+				for (int i = 0; i < declaration.length(); ++i) {
+					if (declaration.charAt(i) == '=') {
+						variableName = declaration.substring(0, i).trim();
+						break;
+					}
+				}
+				if (!stringToGlobalVariableMap.containsKey(variableName) && !variableName.equals("") && !variableName.contains(" ")) {
+					String valueString = parseEverything(declaration.replaceFirst(variableName, "").replaceFirst("=", "").trim()).toString();
+					if (valueString.equals(""))
+						throw new MalformedDeclarationException("Initial value for variable " + variableName + " not set");
+					Object value = parseVariable(valueString);
+					setGlobalVariable(variableName, value);
+					return true;
+				} else throw new MalformedDeclarationException("Illegal variable declaration: " + variableName);
+			}
+
+			@Override
+			public boolean canProcessLine(String line) {
+				return line.toLowerCase().startsWith("global var ");
 			}
 		});
 		addLineProcessor(new LineProcessor() {
@@ -128,6 +151,23 @@ public final class AnonLang {
 								return true;
 							} catch (Exception e1) {
 								throw new MalformedPrefixException("Tried to increment non-numeric variable " + variableName);
+							}
+						}
+					}
+				for (String variableName2 : stringToGlobalVariableMap.keySet())
+					if (variableName.equals(variableName2)) {
+						Object variableValue = stringToGlobalVariableMap.get(variableName).getValue();
+						try {
+							int i = (Integer) variableValue;
+							setGlobalVariable(variableName, i + 1);
+							return true;
+						} catch (Exception e) {
+							try {
+								double d = (Double) variableValue;
+								setGlobalVariable(variableName, d + 1);
+								return true;
+							} catch (Exception e1) {
+								throw new MalformedPrefixException("Tried to decrement non-numeric variable " + variableName);
 							}
 						}
 					}
@@ -160,6 +200,23 @@ public final class AnonLang {
 							}
 						}
 					}
+				for (String variableName2 : stringToGlobalVariableMap.keySet())
+					if (variableName.equals(variableName2)) {
+						Object variableValue = stringToGlobalVariableMap.get(variableName).getValue();
+						try {
+							int i = (Integer) variableValue;
+							setGlobalVariable(variableName, i - 1);
+							return true;
+						} catch (Exception e) {
+							try {
+								double d = (Double) variableValue;
+								setGlobalVariable(variableName, d - 1);
+								return true;
+							} catch (Exception e1) {
+								throw new MalformedPrefixException("Tried to decrement non-numeric variable " + variableName);
+							}
+						}
+					}
 				throw new MalformedPrefixException("Tried to decrement non-existent variable " + variableName);
 			}
 
@@ -171,7 +228,7 @@ public final class AnonLang {
 		addLineProcessor(new LineProcessor() {
 			@Override
 			public boolean processLineNoCheck(String line) {
-				String repeatAmountString = line.replaceFirst("repeat", "").trim();
+				String repeatAmountString = line.replaceFirst("(?i)repeat", "").trim();
 				try {
 					int repeatAmount = Integer.parseInt(parseEverything(repeatAmountString).toString());
 					for (int i = 0; i < repeatAmount; ++i) {
@@ -186,13 +243,16 @@ public final class AnonLang {
 
 			@Override
 			public boolean canProcessLine(String line) {
-				return line.startsWith("repeat ");
+				return line.toLowerCase().startsWith("repeat ");
 			}
 		});
 		addLineProcessor(new LineProcessor() {
 			@Override
 			public boolean processLineNoCheck(String line) {
-				String variableName = stringToVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst().get();
+				Optional<String> optionalVariableName = stringToVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst();
+				if (!optionalVariableName.isPresent())
+					optionalVariableName = stringToGlobalVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst();
+				String variableName = optionalVariableName.get();
 				String variableValueString = line.replaceFirst(variableName, "").trim().replaceFirst("=", "");
 				Object variableValue = parseEverything(variableValueString);
 				setVariable(variableName, variableValue);
@@ -201,7 +261,9 @@ public final class AnonLang {
 
 			@Override
 			public boolean canProcessLine(String line) {
-				return stringToVariableMap.keySet().stream().filter(variableName -> line.replaceFirst(variableName, "").trim().startsWith("=")).findFirst().isPresent();
+				boolean canProcess = stringToVariableMap.keySet().stream().filter(variableName -> line.replaceFirst(variableName, "").trim().startsWith("=")).findFirst().isPresent();
+				canProcess = canProcess || stringToGlobalVariableMap.keySet().stream().filter(variableName -> line.replaceFirst(variableName, "").trim().startsWith("=")).findFirst().isPresent();
+				return canProcess;
 			}
 		});
 	}
@@ -226,13 +288,13 @@ public final class AnonLang {
 			try {
 				Path filePath = Paths.get(fileName);
 				currentLines = Files.readAllLines(filePath);
+				currentFileName = filePath.getFileName().toString();
 				currentLines.forEach(line -> processLine(false));
 				stringToVariableMap = new HashMap<>(); //reset variables
 				linesToSkip = new ArrayList<>(); //reset list of lines to skip
 				System.out.println();
 				System.out.println("Finished execution of file " + fileName);
 			} catch (Exception e) {
-				System.out.println();
 				e.printStackTrace();
 				System.out.println("Execution of " + fileName + " failed");
 			}
@@ -259,12 +321,12 @@ public final class AnonLang {
 	}
 
 	/**
-	 * Sets the variable with the specified name to the specified value
+	 * Sets the variable with the specified name to the specified value. <br>
+	 * If the variable does not exist, it is created.
 	 *
 	 * @param name  The name of the variable
 	 * @param value The value of the variable
 	 */
-	@SuppressWarnings("unchecked")
 	private static void setVariable(String name, Object value) {
 		name = name.trim();
 		if (stringToVariableMap.containsKey(name)) {
@@ -276,8 +338,31 @@ public final class AnonLang {
 				String newTypeName = value.getClass().getName().replaceFirst("java.lang.", "");
 				throw new IllegalAssignmentException("Variable " + name + " is of type " + currentTypeName + " but was assigned value " + value + " of type " + newTypeName);
 			}
+			variable.setValue(value);
+		} else stringToVariableMap.put(name, AnonVariable.of(value));
+	}
+
+	/**
+	 * Sets the global variable with the specified name to the specified value. <br>
+	 * If the global variable does not exist, it is created.
+	 *
+	 * @param name  The name of the global variable
+	 * @param value The value of the global variable
+	 */
+	private static void setGlobalVariable(String name, Object value) {
+		name = name.trim();
+		if (stringToGlobalVariableMap.containsKey(name)) {
+			AnonVariable variable = stringToGlobalVariableMap.get(name);
+			if (value.getClass() == Integer.class && variable.getType() == Double.class)
+				value = ((Integer) value).doubleValue();
+			if (variable.getType() != value.getClass()) {
+				String currentTypeName = variable.getType().getName().replaceFirst("java.lang.", "");
+				String newTypeName = value.getClass().getName().replaceFirst("java.lang.", "");
+				throw new IllegalAssignmentException("Variable " + name + " is of type " + currentTypeName + " but was assigned value " + value + " of type " + newTypeName);
+			}
+			variable.setValue(value);
 		}
-		stringToVariableMap.put(name, AnonVariable.of(value));
+		stringToGlobalVariableMap.put(currentFileName + '.' + name, AnonVariable.of(value));
 	}
 
 	/**
@@ -291,10 +376,16 @@ public final class AnonLang {
 		string = string.trim();
 		for (String variableName : stringToVariableMap.keySet())
 			string = string.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
+		for (String variableName : stringToGlobalVariableMap.keySet())
+			string = string.replaceAll('&' + variableName + '&', stringToGlobalVariableMap.get(variableName).getValue().toString());
 		String expressionResult = AnonExpression.evaluate(string).toString();
 		if (!expressionResult.equals(string))
 			return parseVariable(expressionResult);
-		return parseVariable(string);
+		String[] stringSplit = string.split("&conc&");
+		String returnString = "";
+		for (String string1 : stringSplit)
+			returnString += AnonExpression.evaluate(string1);
+		return parseVariable(returnString);
 	}
 
 	/**
