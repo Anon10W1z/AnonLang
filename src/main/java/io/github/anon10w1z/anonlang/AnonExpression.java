@@ -36,6 +36,10 @@ import java.util.*;
  */
 public final class AnonExpression {
 	/**
+	 * The math context used for computation
+	 */
+	private static MathContext mathContext = MathContext.DECIMAL32;
+	/**
 	 * The decimal separator
 	 */
 	private final char DECIMAL_SEPARATOR = '.';
@@ -43,12 +47,6 @@ public final class AnonExpression {
 	 * The minus sign
 	 */
 	private final char MINUS_SIGN = '-';
-
-	/**
-	 * The math context used for computation
-	 */
-	private MathContext mathContext = MathContext.DECIMAL32;
-
 	/**
 	 * The expression string to evaluate
 	 */
@@ -76,37 +74,37 @@ public final class AnonExpression {
 		this.expression = expression;
 		addOperator(new Operator("+", 20, true) {
 			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+			public BigDecimal evaluate(BigDecimal num1, BigDecimal num2) {
 				return num1.add(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("-", 20, true) {
 			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+			public BigDecimal evaluate(BigDecimal num1, BigDecimal num2) {
 				return num1.subtract(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("*", 30, true) {
 			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+			public BigDecimal evaluate(BigDecimal num1, BigDecimal num2) {
 				return num1.multiply(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("/", 30, true) {
 			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+			public BigDecimal evaluate(BigDecimal num1, BigDecimal num2) {
 				return num1.divide(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("%", 30, true) {
 			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+			public BigDecimal evaluate(BigDecimal num1, BigDecimal num2) {
 				return num1.remainder(num2, mathContext);
 			}
 		});
 		addOperator(new Operator("^", 40, false) {
 			@Override
-			public BigDecimal eval(BigDecimal num1, BigDecimal num2) {
+			public BigDecimal evaluate(BigDecimal num1, BigDecimal num2) {
 				int signOf2 = num2.signum();
 				double dn1 = num1.doubleValue();
 				num2 = num2.multiply(new BigDecimal(signOf2));
@@ -162,21 +160,21 @@ public final class AnonExpression {
 		addFunction(new Function("sinh", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.sinh(parameters.get(0).doubleValue());
+				double d = Math.sinh(Math.toRadians(parameters.get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("cosh", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.cosh(parameters.get(0).doubleValue());
+				double d = Math.cosh(Math.toRadians(parameters.get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("tanh", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.tanh(parameters.get(0).doubleValue());
+				double d = Math.tanh(Math.toRadians(parameters.get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
@@ -230,18 +228,17 @@ public final class AnonExpression {
 				return new BigDecimal(d, mathContext);
 			}
 		});
-		addFunction(new Function("round", 2) {
+		addFunction(new Function("round", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
 				BigDecimal toRound = parameters.get(0);
-				int precision = parameters.get(1).intValue();
-				return toRound.setScale(precision, mathContext.getRoundingMode());
+				return toRound.setScale(0, mathContext.getRoundingMode());
 			}
 		});
 		addFunction(new Function("floor", 1) {
 			@Override
 			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal toRound = parameters.get(0);
+				BigDecimal toRound = new BigDecimal(parameters.get(0).toString(), mathContext);
 				return toRound.setScale(0, RoundingMode.FLOOR);
 			}
 		});
@@ -378,13 +375,13 @@ public final class AnonExpression {
 	 *
 	 * @return The evaluation result of this expression
 	 */
-	public BigDecimal evaluate() {
+	private Object evaluate() {
 		Stack<BigDecimal> stack = new Stack<>();
 		for (String token : getRPN()) {
 			if (operators.containsKey(token)) {
 				BigDecimal num1 = stack.pop();
 				BigDecimal num2 = stack.pop();
-				stack.push(operators.get(token).eval(num2, num1));
+				stack.push(operators.get(token).evaluate(num2, num1));
 			} else if (functions.containsKey(token.toUpperCase())) {
 				Function function = functions.get(token.toUpperCase());
 				ArrayList<BigDecimal> parameters = new ArrayList<>(function.getTotalParameters());
@@ -404,7 +401,7 @@ public final class AnonExpression {
 	 *
 	 * @param operator The operator to add
 	 */
-	public void addOperator(Operator operator) {
+	private void addOperator(Operator operator) {
 		operators.put(operator.getOperation(), operator);
 	}
 
@@ -413,7 +410,7 @@ public final class AnonExpression {
 	 *
 	 * @param function The function to add
 	 */
-	public void addFunction(Function function) {
+	private void addFunction(Function function) {
 		functions.put(function.getName(), function);
 	}
 
@@ -431,7 +428,7 @@ public final class AnonExpression {
 	/**
 	 * A function in an expression
 	 */
-	public abstract class Function {
+	private abstract class Function {
 		/**
 		 * The name of the function
 		 */
@@ -483,7 +480,7 @@ public final class AnonExpression {
 	/**
 	 * An operator in an expression
 	 */
-	public abstract class Operator {
+	private abstract class Operator {
 		/**
 		 * The operator as a string
 		 */
@@ -545,7 +542,7 @@ public final class AnonExpression {
 		 *
 		 * @return The result of the evaluation
 		 */
-		public abstract BigDecimal eval(BigDecimal num1, BigDecimal num2);
+		public abstract BigDecimal evaluate(BigDecimal num1, BigDecimal num2);
 	}
 
 	/**

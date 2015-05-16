@@ -15,7 +15,9 @@ public final class AnonVariable {
 
 	/**
 	 * Creates a new AnonVariable with the specified value
+	 *
 	 * @param value The value to assign to this variable
+	 *
 	 * @return A new AnonVariable with the specified value
 	 */
 	public static AnonVariable of(Object value) {
@@ -24,6 +26,7 @@ public final class AnonVariable {
 
 	/**
 	 * Returns the value of this variable
+	 *
 	 * @return The value of this variable
 	 */
 	public Object getValue() {
@@ -41,6 +44,7 @@ public final class AnonVariable {
 
 	/**
 	 * Returns the class type of this variable's value
+	 *
 	 * @return The class type of this variable's value
 	 */
 	public Class getType() {

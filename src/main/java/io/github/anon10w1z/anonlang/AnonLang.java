@@ -12,30 +12,30 @@ import java.util.*;
  */
 public final class AnonLang {
 	/**
-	 * Maps variable names to variables
-	 */
-	public static Map<String, AnonVariable> stringToVariableMap = new HashMap<>();
-	/**
-	 * Maps global variable names to global variables
-	 */
-	public static Map<String, AnonVariable> stringToGlobalVariableMap = new HashMap<>();
-
-	/**
-	 * A list of all line processors
-	 */
-	public static List<LineProcessor> lineProcessors = new ArrayList<>();
-	/**
 	 * The current index of the current line
 	 */
 	public static int currentIndex;
 	/**
+	 * Maps variable names to variables
+	 */
+	private static Map<String, AnonVariable> stringToVariableMap = new HashMap<>();
+	/**
+	 * Maps global variable names to global variables
+	 */
+	private static Map<String, AnonVariable> stringToGlobalVariableMap = new HashMap<>();
+	/**
+	 * A list of all line processors
+	 */
+	private static List<LineProcessor> lineProcessors = new ArrayList<>();
+	/**
 	 * A list of lines to skip when executed by the main method (used for repeat loops)
 	 */
-	public static List<Integer> linesToSkip = new ArrayList<>();
+	private static List<Integer> linesToSkip = new ArrayList<>();
 	/**
 	 * The current list of lines to process
 	 */
 	private static List<String> currentLines = new ArrayList<>();
+
 	/**
 	 * The name of the current file that is being processed
 	 */
@@ -51,6 +51,10 @@ public final class AnonLang {
 				String toWrite = line.replaceFirst("(?i)write", "").trim();
 				for (String variableName : stringToVariableMap.keySet())
 					toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
+				for (int i = 0; i < toWrite.length(); ++i)
+					if (toWrite.charAt(i) == ' ')
+						toWrite = toWrite.replaceFirst(" ", "");
+					else break;
 				toWrite = AnonExpression.evaluate(toWrite).toString();
 				System.out.print(toWrite);
 				return true;
@@ -67,9 +71,11 @@ public final class AnonLang {
 				if (line.equals("writeln"))
 					System.out.println();
 				else {
-					String toWrite = line.replaceFirst("(?i)writeln", "").trim();
-					for (String variableName : stringToVariableMap.keySet())
-						toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
+					String toWrite = line.replaceFirst("(?i)writeln", "");
+					for (int i = 0; i < toWrite.length(); ++i)
+						if (toWrite.charAt(i) == ' ')
+							toWrite = toWrite.replaceFirst(" ", "");
+						else break;
 					toWrite = parseEverything(toWrite).toString();
 					System.out.println(toWrite);
 				}
@@ -232,7 +238,7 @@ public final class AnonLang {
 				try {
 					int repeatAmount = Integer.parseInt(parseEverything(repeatAmountString).toString());
 					for (int i = 0; i < repeatAmount; ++i) {
-						linesToSkip.add(currentIndex++);
+						linesToSkip.add(++currentIndex);
 						processLine(true);
 					}
 					return true;
@@ -266,6 +272,17 @@ public final class AnonLang {
 				return canProcess;
 			}
 		});
+		addLineProcessor(new LineProcessor() {
+			@Override
+			protected boolean processLineNoCheck(String line) {
+				return true;
+			}
+
+			@Override
+			protected boolean canProcessLine(String line) {
+				return line.startsWith("//");
+			}
+		});
 	}
 
 	/**
@@ -284,19 +301,21 @@ public final class AnonLang {
 		if (arguments.length == 0)
 			throw new IllegalArgumentException("No execution files specified");
 		for (String fileName : arguments) {
-			System.out.println("Starting execution of file " + fileName);
-			try {
-				Path filePath = Paths.get(fileName);
-				currentLines = Files.readAllLines(filePath);
-				currentFileName = filePath.getFileName().toString();
-				currentLines.forEach(line -> processLine(false));
-				stringToVariableMap = new HashMap<>(); //reset variables
-				linesToSkip = new ArrayList<>(); //reset list of lines to skip
-				System.out.println();
-				System.out.println("Finished execution of file " + fileName);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Execution of " + fileName + " failed");
+			synchronized (AnonLang.class) {
+				System.out.println("Starting execution of file " + fileName);
+				try {
+					Path filePath = Paths.get(fileName);
+					currentLines = Files.readAllLines(filePath);
+					currentFileName = filePath.getFileName().toString();
+					currentLines.forEach(line -> processLine(false));
+					stringToVariableMap = new HashMap<>(); //reset variables
+					linesToSkip = new ArrayList<>(); //reset list of lines to skip
+					System.out.println();
+					System.out.println("Finished execution of file " + fileName);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.out.println("Execution of " + fileName + " failed");
+				}
 			}
 		}
 	}
@@ -381,11 +400,11 @@ public final class AnonLang {
 		String expressionResult = AnonExpression.evaluate(string).toString();
 		if (!expressionResult.equals(string))
 			return parseVariable(expressionResult);
-		String[] stringSplit = string.split("&conc&");
-		String returnString = "";
-		for (String string1 : stringSplit)
-			returnString += AnonExpression.evaluate(string1);
-		return parseVariable(returnString);
+		String[] splitString = string.split("&conc&");
+		String parsedString = "";
+		for (String component : splitString)
+			parsedString += AnonExpression.evaluate(component);
+		return parseVariable(parsedString);
 	}
 
 	/**
