@@ -292,7 +292,11 @@ public final class AnonExpression {
 			try {
 				return Double.parseDouble(expression);
 			} catch (Exception e1) {
-				return new AnonExpression(expression).evaluate();
+				try {
+					return new AnonExpression(expression).evaluate();
+				} catch (Exception e2) {
+					return expression;
+				}
 			}
 		}
 	}
