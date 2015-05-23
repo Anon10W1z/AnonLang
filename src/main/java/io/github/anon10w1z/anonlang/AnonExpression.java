@@ -287,9 +287,13 @@ public final class AnonExpression {
 	 */
 	public static Object evaluate(String expression) {
 		try {
-			return new AnonExpression(expression).evaluate();
+			return Integer.parseInt(expression);
 		} catch (Exception e) {
-			return expression;
+			try {
+				return Double.parseDouble(expression);
+			} catch (Exception e1) {
+				return new AnonExpression(expression).evaluate();
+			}
 		}
 	}
 

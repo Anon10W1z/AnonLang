@@ -42,20 +42,23 @@ public final class AnonLang {
 	private static String currentFileName;
 
 	/**
+	 * A temporary value to keep track of repeats
+	 */
+	private static int repeatCounter = 0;
+
+	/**
 	 * Initialize the line processors
 	 */
 	static {
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //write statements
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String toWrite = line.replaceFirst("(?i)write", "").trim();
-				for (String variableName : stringToVariableMap.keySet())
-					toWrite = toWrite.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
 				for (int i = 0; i < toWrite.length(); ++i)
 					if (toWrite.charAt(i) == ' ')
-						toWrite = toWrite.replaceFirst(" ", "");
+						toWrite = toWrite.replaceFirst(" ", ""); //remove leading spaces
 					else break;
-				toWrite = AnonExpression.evaluate(toWrite).toString();
+				toWrite = parseEverything(toWrite).toString();
 				System.out.print(toWrite);
 				return true;
 			}
@@ -65,7 +68,7 @@ public final class AnonLang {
 				return line.toLowerCase().startsWith("write ");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //writeln statements
 			@Override
 			public boolean processLineNoCheck(String line) {
 				if (line.equals("writeln"))
@@ -74,7 +77,7 @@ public final class AnonLang {
 					String toWrite = line.replaceFirst("(?i)writeln", "");
 					for (int i = 0; i < toWrite.length(); ++i)
 						if (toWrite.charAt(i) == ' ')
-							toWrite = toWrite.replaceFirst(" ", "");
+							toWrite = toWrite.replaceFirst(" ", ""); //remove leading spaces
 						else break;
 					toWrite = parseEverything(toWrite).toString();
 					System.out.println(toWrite);
@@ -87,7 +90,7 @@ public final class AnonLang {
 				return line.toLowerCase().startsWith("writeln");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //variable declarations
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String declaration = line.replaceFirst("(?i)var", "").trim();
@@ -113,7 +116,7 @@ public final class AnonLang {
 				return line.toLowerCase().startsWith("var ");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //global variable declarations
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String declaration = line.replaceFirst("(?i)global var", "").trim();
@@ -139,7 +142,7 @@ public final class AnonLang {
 				return line.toLowerCase().startsWith("global var ");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //increment prefix
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String variableName = line.replaceFirst("\\++", "").trim();
@@ -185,7 +188,7 @@ public final class AnonLang {
 				return line.startsWith("++");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //decrement prefix
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String variableName = line.replaceFirst("--", "").trim();
@@ -231,7 +234,7 @@ public final class AnonLang {
 				return line.startsWith("--");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //repeat statements
 			@Override
 			public boolean processLineNoCheck(String line) {
 				String repeatAmountString = line.replaceFirst("(?i)repeat", "").trim();
@@ -252,7 +255,7 @@ public final class AnonLang {
 				return line.toLowerCase().startsWith("repeat ");
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //variable assignments
 			@Override
 			public boolean processLineNoCheck(String line) {
 				Optional<String> optionalVariableName = stringToVariableMap.keySet().stream().filter(string -> line.replaceAll(" ", "").startsWith(string + "=")).findFirst();
@@ -272,7 +275,7 @@ public final class AnonLang {
 				return canProcess;
 			}
 		});
-		addLineProcessor(new LineProcessor() {
+		addLineProcessor(new LineProcessor() { //comments
 			@Override
 			protected boolean processLineNoCheck(String line) {
 				return true;
@@ -301,21 +304,23 @@ public final class AnonLang {
 		if (arguments.length == 0)
 			throw new IllegalArgumentException("No execution files specified");
 		for (String fileName : arguments) {
-			synchronized (AnonLang.class) {
-				System.out.println("Starting execution of file " + fileName);
-				try {
-					Path filePath = Paths.get(fileName);
-					currentLines = Files.readAllLines(filePath);
-					currentFileName = filePath.getFileName().toString();
-					currentLines.forEach(line -> processLine(false));
-					stringToVariableMap = new HashMap<>(); //reset variables
-					linesToSkip = new ArrayList<>(); //reset list of lines to skip
-					System.out.println();
-					System.out.println("Finished execution of file " + fileName);
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.out.println("Execution of " + fileName + " failed");
-				}
+			System.out.println("Starting execution of file " + fileName);
+			try {
+				Path filePath = Paths.get(fileName);
+				String linesCombined = String.join("", Files.readAllLines(filePath));
+				String[] linesSplit = linesCombined.split(";");
+				for (String line : linesSplit)
+					currentLines.add(line.trim());
+				currentFileName = filePath.toString();
+				currentLines.forEach(line -> processLine(false));
+				currentLines.clear(); //reset current lines
+				stringToVariableMap.clear(); //reset variables
+				linesToSkip.clear(); //reset list of lines to skip
+				System.out.println();
+				System.out.println("Finished execution of file " + fileName);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Execution of " + fileName + " failed");
 			}
 		}
 	}
@@ -323,18 +328,22 @@ public final class AnonLang {
 	/**
 	 * Processes a line
 	 *
-	 * @param inRepeatStatement Whether or not this line is being processed in a repeat loop
+	 * @param inRepeatLoop Whether or not this line is being processed in a repeat loop
 	 */
-	private static void processLine(boolean inRepeatStatement) {
-		if (!linesToSkip.contains(currentIndex) || inRepeatStatement) {
+	private static void processLine(boolean inRepeatLoop) {
+		if (inRepeatLoop)
+			setVariable("loopCounter", repeatCounter++);
+		else stringToVariableMap.remove("loopCounter");
+		if (!linesToSkip.contains(currentIndex) || inRepeatLoop) {
 			String line = currentLines.get(currentIndex);
+			line = line.trim();
 			boolean lineProcessSuccess = false;
 			for (LineProcessor lineProcessor : lineProcessors)
 				lineProcessSuccess = lineProcessSuccess || lineProcessor.processLineWithCheck(line);
 			if (!lineProcessSuccess)
 				throw new MalformedLineException("Could not process line #" + (currentIndex + 1));
 		}
-		if (inRepeatStatement)
+		if (inRepeatLoop)
 			--currentIndex;
 		else ++currentIndex;
 	}
@@ -447,7 +456,6 @@ public final class AnonLang {
 		 * @return Whether or not processing was successful
 		 */
 		public boolean processLineWithCheck(String line) {
-			line = line.trim();
 			return canProcessLine(line) && processLineNoCheck(line);
 		}
 
