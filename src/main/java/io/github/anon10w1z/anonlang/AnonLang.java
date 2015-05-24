@@ -240,13 +240,15 @@ public final class AnonLang {
 				String repeatAmountString = line.replaceFirst("(?i)repeat", "").trim();
 				try {
 					int repeatAmount = Integer.parseInt(parseEverything(repeatAmountString).toString());
+					if (repeatAmount <= 0)
+						throw new MalformedRepeatException(repeatAmount + " is not a valid repeat amount");
 					for (int i = 0; i < repeatAmount; ++i) {
 						linesToSkip.add(++currentIndex);
 						processLine(true);
 					}
 					return true;
 				} catch (NumberFormatException e) {
-					throw new MalformedRepeatException(repeatAmountString + " is not a valid repeat amount");
+					throw new MalformedRepeatException(parseEverything(repeatAmountString) + " is not a valid repeat amount");
 				}
 			}
 
@@ -333,7 +335,10 @@ public final class AnonLang {
 	private static void processLine(boolean inRepeatLoop) {
 		if (inRepeatLoop)
 			setVariable("loopCounter", repeatCounter++);
-		else stringToVariableMap.remove("loopCounter");
+		else {
+			stringToVariableMap.remove("loopCounter");
+			repeatCounter = 0;
+		}
 		if (!linesToSkip.contains(currentIndex) || inRepeatLoop) {
 			String line = currentLines.get(currentIndex);
 			line = line.trim();
@@ -361,6 +366,9 @@ public final class AnonLang {
 			AnonVariable variable = stringToVariableMap.get(name);
 			if (value.getClass() == Integer.class && variable.getType() == Double.class)
 				value = ((Integer) value).doubleValue();
+			if (value.getClass() == Double.class && variable.getType() == Integer.class) {
+				value = (int) Math.round((Double) value);
+			}
 			if (variable.getType() != value.getClass()) {
 				String currentTypeName = variable.getType().getName().replaceFirst("java.lang.", "");
 				String newTypeName = value.getClass().getName().replaceFirst("java.lang.", "");
@@ -406,7 +414,7 @@ public final class AnonLang {
 			string = string.replaceAll('&' + variableName + '&', stringToVariableMap.get(variableName).getValue().toString());
 		for (String variableName : stringToGlobalVariableMap.keySet())
 			string = string.replaceAll('&' + variableName + '&', stringToGlobalVariableMap.get(variableName).getValue().toString());
-		String expressionResult = AnonExpression.evaluate(string).toString();
+		String expressionResult = AnonExpression.evaluate(string);
 		if (!expressionResult.equals(string))
 			return parseVariable(expressionResult);
 		String[] splitString = string.split("&conc&");

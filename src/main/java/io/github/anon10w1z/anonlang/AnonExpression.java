@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Udo Klimaschewski and Anon10W1z
@@ -122,137 +123,142 @@ public final class AnonExpression {
 
 		addFunction(new Function("random", 0) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
+			public Object evaluate(List<Object> parameters) {
 				double d = Math.random();
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("randomBetween", 2) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double rangeMin = parameters.get(0).doubleValue();
-				double rangeMax = parameters.get(1).doubleValue();
+			public Object evaluate(List<Object> parameters) {
+				double rangeMin = getBigDecimalList(parameters).get(0).doubleValue();
+				double rangeMax = getBigDecimalList(parameters).get(1).doubleValue();
 				double d = rangeMin + (rangeMax - rangeMin) * Math.random();
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("sin", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.sin(Math.toRadians(parameters.get(0).doubleValue()));
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.sin(Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("cos", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.cos(Math.toRadians(parameters.get(0).doubleValue()));
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.cos(Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("tan", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.tan(Math.toRadians(parameters.get(0).doubleValue()));
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.tan(Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("sinh", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.sinh(Math.toRadians(parameters.get(0).doubleValue()));
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.sinh(Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("cosh", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.cosh(Math.toRadians(parameters.get(0).doubleValue()));
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.cosh(Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("tanh", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.tanh(Math.toRadians(parameters.get(0).doubleValue()));
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.tanh(Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue()));
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("rad", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.toRadians(parameters.get(0).doubleValue());
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.toRadians(getBigDecimalList(parameters).get(0).doubleValue());
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("deg", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.toDegrees(parameters.get(0).doubleValue());
+			public Object evaluate(List<Object> parameters) {
+				double d = Math.toDegrees(getBigDecimalList(parameters).get(0).doubleValue());
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("max", 2) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal v1 = parameters.get(0);
-				BigDecimal v2 = parameters.get(1);
+			public Object evaluate(List<Object> parameters) {
+				List<BigDecimal> bigDecimalList = getBigDecimalList(parameters);
+				BigDecimal v1 = bigDecimalList.get(0);
+				BigDecimal v2 = bigDecimalList.get(1);
 				return v1.compareTo(v2) > 0 ? v1 : v2;
 			}
 		});
 		addFunction(new Function("min", 2) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal v1 = parameters.get(0);
-				BigDecimal v2 = parameters.get(1);
+			public Object evaluate(List<Object> parameters) {
+				List<BigDecimal> bigDecimalList = getBigDecimalList(parameters);
+				BigDecimal v1 = bigDecimalList.get(0);
+				BigDecimal v2 = bigDecimalList.get(1);
 				return v1.compareTo(v2) < 0 ? v1 : v2;
 			}
 		});
 		addFunction(new Function("abs", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				return parameters.get(0).abs(mathContext);
+			public Object evaluate(List<Object> parameters) {
+				return getBigDecimalList(parameters).get(0).abs(mathContext);
 			}
 		});
 		addFunction(new Function("log", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.log(parameters.get(0).doubleValue());
+			public Object evaluate(List<Object> parameters) {
+				List<BigDecimal> bigDecimalList = getBigDecimalList(parameters);
+				double d = Math.log(bigDecimalList.get(0).doubleValue());
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("log10", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				double d = Math.log10(parameters.get(0).doubleValue());
+			public Object evaluate(List<Object> parameters) {
+				List<BigDecimal> bigDecimalList = getBigDecimalList(parameters);
+				double d = Math.log10(bigDecimalList.get(0).doubleValue());
 				return new BigDecimal(d, mathContext);
 			}
 		});
 		addFunction(new Function("round", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal toRound = parameters.get(0);
+			public Object evaluate(List<Object> parameters) {
+				BigDecimal toRound = getBigDecimalList(parameters).get(0);
 				return toRound.setScale(0, mathContext.getRoundingMode());
 			}
 		});
 		addFunction(new Function("floor", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal toRound = new BigDecimal(parameters.get(0).toString(), mathContext);
+			public Object evaluate(List<Object> parameters) {
+				List<BigDecimal> bigDecimalList = getBigDecimalList(parameters);
+				BigDecimal toRound = new BigDecimal(bigDecimalList.get(0).toPlainString(), mathContext);
 				return toRound.setScale(0, RoundingMode.FLOOR);
 			}
 		});
 		addFunction(new Function("ceiling", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal toRound = parameters.get(0);
+			public Object evaluate(List<Object> parameters) {
+				BigDecimal toRound = getBigDecimalList(parameters).get(0);
 				return toRound.setScale(0, RoundingMode.CEILING);
 			}
 		});
 		addFunction(new Function("sqrt", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
-				BigDecimal x = parameters.get(0);
+			public Object evaluate(List<Object> parameters) {
+				BigDecimal x = getBigDecimalList(parameters).get(0);
 				if (x.compareTo(BigDecimal.ZERO) == 0)
 					return new BigDecimal(0);
 				BigInteger n = x.movePointRight(mathContext.getPrecision() << 1).toBigInteger();
@@ -272,8 +278,33 @@ public final class AnonExpression {
 		});
 		addFunction(new Function("evaluate", 1) {
 			@Override
-			public BigDecimal evaluate(List<BigDecimal> parameters) {
+			public Object evaluate(List<Object> parameters) {
 				return parameters.get(0);
+			}
+		});
+		addFunction(new Function("read", 0) {
+			@Override
+			public Object evaluate(List<Object> parameters) {
+				try {
+					return new Scanner(System.in).next();
+				} catch (Exception e) {
+					return BigDecimal.ZERO;
+				}
+			}
+		});
+		addFunction(new Function("parse", 1) {
+			@Override
+			public Object evaluate(List<Object> parameters) {
+				String toParse = parameters.get(0).toString();
+				try {
+					return Integer.parseInt(toParse);
+				} catch (Exception e) {
+					try {
+						return Double.parseDouble(toParse);
+					} catch (Exception e1) {
+						return toParse;
+					}
+				}
 			}
 		});
 	}
@@ -285,19 +316,11 @@ public final class AnonExpression {
 	 *
 	 * @return The result of the evaluation
 	 */
-	public static Object evaluate(String expression) {
+	public static String evaluate(String expression) {
 		try {
-			return Integer.parseInt(expression);
+			return new AnonExpression(expression).evaluate();
 		} catch (Exception e) {
-			try {
-				return Double.parseDouble(expression);
-			} catch (Exception e1) {
-				try {
-					return new AnonExpression(expression).evaluate();
-				} catch (Exception e2) {
-					return expression;
-				}
-			}
+			return expression;
 		}
 	}
 
@@ -383,25 +406,27 @@ public final class AnonExpression {
 	 *
 	 * @return The evaluation result of this expression
 	 */
-	private Object evaluate() {
-		Stack<BigDecimal> stack = new Stack<>();
+	private String evaluate() {
+		Stack<Object> stack = new Stack<>();
 		for (String token : getRPN()) {
 			if (operators.containsKey(token)) {
-				BigDecimal num1 = stack.pop();
-				BigDecimal num2 = stack.pop();
+				BigDecimal num1 = (BigDecimal) stack.pop();
+				BigDecimal num2 = (BigDecimal) stack.pop();
 				stack.push(operators.get(token).evaluate(num2, num1));
 			} else if (functions.containsKey(token.toUpperCase())) {
 				Function function = functions.get(token.toUpperCase());
 				ArrayList<BigDecimal> parameters = new ArrayList<>(function.getTotalParameters());
 				for (int i = 0; i < function.totalParameters; ++i)
-					parameters.add(0, stack.pop());
-				BigDecimal functionResult = function.evaluate(parameters);
+					parameters.add(0, (BigDecimal) stack.pop());
+				Object functionResult = function.evaluate((List) parameters);
 				stack.push(functionResult);
 			} else {
 				stack.push(new BigDecimal(token, mathContext));
 			}
 		}
-		return stack.pop().stripTrailingZeros();
+		if (stack.peek() instanceof BigDecimal)
+			return ((BigDecimal) stack.pop()).stripTrailingZeros().toPlainString();
+		return stack.pop().toString();
 	}
 
 	/**
@@ -431,6 +456,10 @@ public final class AnonExpression {
 		if (rpn == null)
 			rpn = shuntingYard(this.expression);
 		return rpn;
+	}
+
+	private ArrayList<BigDecimal> getBigDecimalList(List<Object> list) {
+		return list.stream().map(object -> (BigDecimal) object).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -482,7 +511,7 @@ public final class AnonExpression {
 		 *
 		 * @return The result of the evaluation
 		 */
-		public abstract BigDecimal evaluate(List<BigDecimal> parameters);
+		public abstract Object evaluate(List<Object> parameters);
 	}
 
 	/**
