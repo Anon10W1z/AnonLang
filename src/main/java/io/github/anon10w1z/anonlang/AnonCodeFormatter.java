@@ -28,7 +28,7 @@ public final class AnonCodeFormatter {
 				for (String line : linesSplit)
 					linesList.add(line.trim());
 				PrintWriter writer = new PrintWriter(filePath.toFile());
-				writer.print("");
+				writer.print(""); //empty the file
 				String lastLine = "";
 				for (String line : linesList) {
 					String toWrite = line + ';';

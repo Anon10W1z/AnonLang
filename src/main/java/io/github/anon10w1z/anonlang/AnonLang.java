@@ -46,6 +46,8 @@ public final class AnonLang {
 	 */
 	private static int repeatCounter = 0;
 
+	private static boolean formatMode = false;
+
 	/**
 	 * Initialize the line processors
 	 */
@@ -306,23 +308,31 @@ public final class AnonLang {
 		if (arguments.length == 0)
 			throw new IllegalArgumentException("No execution files specified");
 		for (String fileName : arguments) {
-			System.out.println("Starting execution of file " + fileName);
-			try {
-				Path filePath = Paths.get(fileName);
-				String linesCombined = String.join("", Files.readAllLines(filePath));
-				String[] linesSplit = linesCombined.split(";");
-				for (String line : linesSplit)
-					currentLines.add(line.trim());
-				currentFileName = filePath.toString();
-				currentLines.forEach(line -> processLine(false));
-				currentLines.clear(); //reset current lines
-				stringToVariableMap.clear(); //reset variables
-				linesToSkip.clear(); //reset list of lines to skip
-				System.out.println();
-				System.out.println("Finished execution of file " + fileName);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Execution of " + fileName + " failed");
+			if (fileName.equals("--format")) {
+				formatMode = true;
+				continue;
+			}
+			if (formatMode)
+				AnonCodeFormatter.main(new String[]{fileName});
+			else {
+				System.out.println("Starting execution of file " + fileName);
+				try {
+					Path filePath = Paths.get(fileName);
+					String linesCombined = String.join("", Files.readAllLines(filePath));
+					String[] linesSplit = linesCombined.split(";");
+					for (String line : linesSplit)
+						currentLines.add(line.trim());
+					currentFileName = filePath.toString();
+					currentLines.forEach(line -> processLine(false));
+					currentLines.clear(); //reset current lines
+					stringToVariableMap.clear(); //reset variables
+					linesToSkip.clear(); //reset list of lines to skip
+					System.out.println();
+					System.out.println("Finished execution of file " + fileName);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.out.println("Execution of " + fileName + " failed");
+				}
 			}
 		}
 	}
