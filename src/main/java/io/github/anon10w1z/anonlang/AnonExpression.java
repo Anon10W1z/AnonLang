@@ -599,14 +599,6 @@ public final class AnonExpression {
 			return (pos < input.length());
 		}
 
-		private char peekNextChar() {
-			if (pos < (input.length() - 1)) {
-				return input.charAt(pos + 1);
-			} else {
-				return 0;
-			}
-		}
-
 		@Override
 		public String next() {
 			StringBuilder token = new StringBuilder();
@@ -648,6 +640,14 @@ public final class AnonExpression {
 		@Override
 		public void remove() {
 			//unsupported operation
+		}
+
+		private char peekNextChar() {
+			if (pos < (input.length() - 1)) {
+				return input.charAt(pos + 1);
+			} else {
+				return 0;
+			}
 		}
 	}
 }

@@ -29,18 +29,18 @@ public final class AnonCodeFormatter {
 					linesList.add(line.trim());
 				PrintWriter writer = new PrintWriter(filePath.toFile());
 				writer.print(""); //empty the file
-				String lastLine = "";
+				String lastWritten = "";
 				for (String line : linesList) {
 					String toWrite = line + ';';
-					if (lastLine.trim().startsWith("repeat")) {
+					if (lastWritten.trim().startsWith("repeat")) {
 						String tabs = "\t";
-						int tabCount = lastLine.length() - lastLine.replaceAll("\t", "").length();
+						int tabCount = lastWritten.length() - lastWritten.replaceAll("\t", "").length();
 						for (int i = 0; i < tabCount; ++i)
 							tabs += '\t';
 						toWrite = tabs + line + ';';
 					}
 					writer.println(toWrite);
-					lastLine = toWrite;
+					lastWritten = toWrite;
 				}
 				writer.close();
 				System.out.println("Finished formatting of file " + fileName);
