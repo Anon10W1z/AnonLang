@@ -68,7 +68,6 @@ public final class AnonExpression {
 
 	/**
 	 * Constructs a new expression
-	 *
 	 * @param expression The expression string to evaluate
 	 */
 	private AnonExpression(String expression) {
@@ -311,9 +310,7 @@ public final class AnonExpression {
 
 	/**
 	 * Evaluates the given expression string and returns the result
-	 *
 	 * @param expression The expression string to evaluate
-	 *
 	 * @return The result of the evaluation
 	 */
 	public static String evaluate(String expression) {
@@ -326,10 +323,8 @@ public final class AnonExpression {
 
 	/**
 	 * Returns whether or not the given string is a number
-	 *
 	 * @param string The string to test
-	 *
-	 * @return Whether of not the given string is a number
+	 * @return Whether or not the given string is a number
 	 */
 	private boolean isNumber(String string) {
 		if (string.charAt(0) == MINUS_SIGN && string.length() == 1)
@@ -342,9 +337,7 @@ public final class AnonExpression {
 
 	/**
 	 * Converts the given expression string to an RPN expression
-	 *
 	 * @param expression The expression string to evaluate
-	 *
 	 * @return The result of the evaluation
 	 */
 	private List<String> shuntingYard(String expression) {
@@ -403,9 +396,9 @@ public final class AnonExpression {
 
 	/**
 	 * Evaluates this expression
-	 *
 	 * @return The evaluation result of this expression
 	 */
+	@SuppressWarnings("unchecked")
 	private String evaluate() {
 		Stack<Object> stack = new Stack<>();
 		for (String token : getRPN()) {
@@ -431,7 +424,6 @@ public final class AnonExpression {
 
 	/**
 	 * Adds an operator to this expression
-	 *
 	 * @param operator The operator to add
 	 */
 	private void addOperator(Operator operator) {
@@ -440,7 +432,6 @@ public final class AnonExpression {
 
 	/**
 	 * Adds a function to this expression
-	 *
 	 * @param function The function to add
 	 */
 	private void addFunction(Function function) {
@@ -449,7 +440,6 @@ public final class AnonExpression {
 
 	/**
 	 * Returns the RPN evaluation of this expression
-	 *
 	 * @return The result of the evaluation
 	 */
 	private List<String> getRPN() {
@@ -477,7 +467,6 @@ public final class AnonExpression {
 
 		/**
 		 * Constructs a function with the given name and total number of parameters
-		 *
 		 * @param name            The name of this function
 		 * @param totalParameters The number of total parameters this function takes
 		 */
@@ -488,7 +477,6 @@ public final class AnonExpression {
 
 		/**
 		 * Returns the name of this function
-		 *
 		 * @return The name of this function
 		 */
 		public String getName() {
@@ -497,7 +485,6 @@ public final class AnonExpression {
 
 		/**
 		 * Returns the total number of parameters this function takes
-		 *
 		 * @return The total number of parameters this function takes
 		 */
 		public int getTotalParameters() {
@@ -506,9 +493,7 @@ public final class AnonExpression {
 
 		/**
 		 * Evaluates this function and returns the result
-		 *
 		 * @param parameters The parameters of this function
-		 *
 		 * @return The result of the evaluation
 		 */
 		public abstract Object evaluate(List<Object> parameters);
@@ -533,7 +518,6 @@ public final class AnonExpression {
 
 		/**
 		 * Constructs an operator with the given properties
-		 *
 		 * @param operation       The operator as a string
 		 * @param precedence      The precedence of this operator
 		 * @param leftAssociative Whether of not this operator is left associative
@@ -546,7 +530,6 @@ public final class AnonExpression {
 
 		/**
 		 * Returns this operator as a string
-		 *
 		 * @return This operator as a string
 		 */
 		public String getOperation() {
@@ -555,7 +538,6 @@ public final class AnonExpression {
 
 		/**
 		 * Returns the precedence of this operator
-		 *
 		 * @return The precedence of this operator
 		 */
 		public int getPrecedence() {
@@ -564,7 +546,6 @@ public final class AnonExpression {
 
 		/**
 		 * Returns whether of not this operator is left associative
-		 *
 		 * @return Whether of not this operator is left associative
 		 */
 		public boolean isLeftAssociative() {
@@ -573,10 +554,8 @@ public final class AnonExpression {
 
 		/**
 		 * Evaluates this operator on the two given BigDecimals
-		 *
 		 * @param num1 The first decimal
 		 * @param num2 The second decimal
-		 *
 		 * @return The result of the evaluation
 		 */
 		public abstract BigDecimal evaluate(BigDecimal num1, BigDecimal num2);

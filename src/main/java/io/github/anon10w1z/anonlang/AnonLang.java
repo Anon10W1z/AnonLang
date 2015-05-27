@@ -301,7 +301,6 @@ public final class AnonLang {
 
 	/**
 	 * Takes an array of paths to AnonLang files and processes each file
-	 *
 	 * @param arguments An array of paths to AnonLang files
 	 */
 	public static void main(String[] arguments) {
@@ -339,7 +338,6 @@ public final class AnonLang {
 
 	/**
 	 * Processes a line
-	 *
 	 * @param inRepeatLoop Whether or not this line is being processed in a repeat loop
 	 */
 	private static void processLine(boolean inRepeatLoop) {
@@ -366,7 +364,6 @@ public final class AnonLang {
 	/**
 	 * Sets the variable with the specified name to the specified value. <br>
 	 * If the variable does not exist, it is created.
-	 *
 	 * @param name  The name of the variable
 	 * @param value The value of the variable
 	 */
@@ -391,7 +388,6 @@ public final class AnonLang {
 	/**
 	 * Sets the global variable with the specified name to the specified value. <br>
 	 * If the global variable does not exist, it is created.
-	 *
 	 * @param name  The name of the global variable
 	 * @param value The value of the global variable
 	 */
@@ -413,9 +409,7 @@ public final class AnonLang {
 
 	/**
 	 * Parses EVERYTHING possible from the given string
-	 *
 	 * @param string The string to parse
-	 *
 	 * @return The parsed object
 	 */
 	private static Object parseEverything(String string) {
@@ -436,9 +430,7 @@ public final class AnonLang {
 
 	/**
 	 * Parses a string into an object
-	 *
 	 * @param string The string to parse
-	 *
 	 * @return The parsed object
 	 */
 	private static Object parseVariable(String string) {
@@ -455,7 +447,6 @@ public final class AnonLang {
 
 	/**
 	 * Adds a line processor to the list of line processors
-	 *
 	 * @param lineProcessor The line processor to add
 	 */
 	private static void addLineProcessor(LineProcessor lineProcessor) {
@@ -468,9 +459,7 @@ public final class AnonLang {
 	private abstract static class LineProcessor {
 		/**
 		 * Processes the given line
-		 *
 		 * @param line The line to process
-		 *
 		 * @return Whether or not processing was successful
 		 */
 		public boolean processLineWithCheck(String line) {
@@ -479,18 +468,14 @@ public final class AnonLang {
 
 		/**
 		 * Processes the given line without checking if it can
-		 *
 		 * @param line The line to process
-		 *
 		 * @return Whether or not processing was successful
 		 */
 		protected abstract boolean processLineNoCheck(String line);
 
 		/**
 		 * Returns whether or not this line processor can process the given line
-		 *
 		 * @param line The line to check
-		 *
 		 * @return Whether or not this line processor can process the given line
 		 */
 		protected abstract boolean canProcessLine(String line);
